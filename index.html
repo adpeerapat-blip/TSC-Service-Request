@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebApp - ศูนย์รวมช่าง</title>
+    <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/1kH8HErbms_U0xnoiJ7jlW7r79FK3hXeB">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-slate-100">
+
+    <!-- Corner Page Loader -->
+    <div id="page-loader" class="hidden fixed top-5 right-5 z-[101] p-2 bg-white/80 backdrop-blur-sm rounded-full shadow-lg">
+        <div class="spinner"></div>
+    </div>
+    
+    <!-- Auth Container -->
+    <div id="auth-container">
+        <!-- Login View -->
+        <div id="login-view" class="min-h-screen bg-slate-100 flex items-center justify-center p-4">
+            <div class="w-full max-w-md bg-white p-8 rounded-2xl shadow-lg space-y-6">
+                <div class="text-center">
+                    <img src="https://lh3.googleusercontent.com/d/1b_e-SYaUDdlZqzyAwanUcYhaTx9inclg" alt="Logo" class="mx-auto mb-4 w-40 rounded-lg">
+                    <h1 class="text-2xl font-bold text-slate-800">แจ้งงานศูนย์รวมช่าง</h1>
+                    <p class="text-slate-500">เข้าสู่ระบบเพื่อใช้งาน</p>
+                </div>
+                <form id="login-form" class="space-y-6">
+                    <div>
+                        <label for="login-email" class="block text-sm font-medium text-slate-700 mb-1">อีเมล</label>
+                        <input type="email" id="login-email" name="email" required class="w-full p-3 border border-slate-300 rounded-lg shadow-sm focus:ring-sky-500 focus:border-sky-500 transition" placeholder="กรอกอีเมล">
+                    </div>
+                    <div>
+                        <label for="login-password" class="block text-sm font-medium text-slate-700 mb-1">รหัสผ่าน</label>
+                        <input type="password" id="login-password" name="password" required class="w-full p-3 border border-slate-300 rounded-lg shadow-sm focus:ring-sky-500 focus:border-sky-500 transition" placeholder="กรอกรหัสผ่าน">
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-transform transform hover:scale-105">เข้าสู่ระบบ</button>
+                </form>
+                <div class="text-center text-sm">
+                    <button id="show-signup-btn" class="font-medium text-blue-600 hover:underline">สมัครสมาชิก</button>
+                    <span class="mx-2 text-slate-300">|</span>
+                    <button id="show-forgot-password-btn" class="font-medium text-blue-600 hover:underline">ลืมรหัสผ่าน?</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Signup View -->
+        <div id="signup-view" class="min-h-screen bg-slate-100 flex items-center justify-center p-4 hidden">
+            <div class="w-full max-w-md bg-white p-8 rounded-2xl shadow-lg space-y-6">
+                 <div class="text-center">
+                    <img src="https://lh3.googleusercontent.com/d/1b_e-SYaUDdlZqzyAwanUcYhaTx9inclg" alt="Logo" class="mx-auto mb-4 w-40 rounded-lg">
+                    <h1 class="text-2xl font-bold text-slate-800">สมัครสมาชิก</h1>
+                    <p class="text-slate-500">กรอกข้อมูลเพื่อสร้างบัญชีใหม่</p>
+                </div>
+                <form id="signup-form" class="space-y-4">
+                    <div>
+                        <label for="signup-fullname" class="block text-sm font-medium text-slate-700 mb-1">ชื่อ-สกุล</label>
+                        <input type="text" id="signup-fullname" name="fullName" required class="w-full p-2 border border-slate-300 rounded-lg shadow-sm">
+                    </div>
+                    <div>
+                        <label for="signup-email" class="block text-sm font-medium text-slate-700 mb-1">อีเมล</label>
+                        <input type="email" id="signup-email" name="email" required class="w-full p-2 border border-slate-300 rounded-lg shadow-sm">
+                    </div>
+                    <div>
+                        <label for="signup-phone" class="block text-sm font-medium text-slate-700 mb-1">เบอร์โทร</label>
+                        <input type="tel" id="signup-phone" name="phone" required class="w-full p-2 border border-slate-300 rounded-lg shadow-sm" pattern="[0-9]*" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                    </div>
+                    <div>
+                        <label for="signup-department" class="block text-sm font-medium text-slate-700 mb-1">แผนก/หน่วยงาน</label>
+                        <input type="text" id="signup-department" name="department" list="department-list-signup" required class="w-full p-2 border border-slate-300 rounded-lg shadow-sm" placeholder="เลือกหรือพิมพ์เพื่อเพิ่มใหม่">
+                        <datalist id="department-list-signup"></datalist>
+                    </div>
+                    <div>
+                        <label for="signup-password" class="block text-sm font-medium text-slate-700 mb-1">รหัสผ่าน</label>
+                        <input type="password" id="signup-password" name="password" required class="w-full p-2 border border-slate-300 rounded-lg shadow-sm">
+                    </div>
+                    <div>
+                        <label for="signup-confirm-password" class="block text-sm font-medium text-slate-700 mb-1">ยืนยันรหัสผ่าน</label>
+                        <input type="password" id="signup-confirm-password" name="confirmPassword" required class="w-full p-2 border border-slate-300 rounded-lg shadow-sm">
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition">สมัครสมาชิก</button>
+                </form>
+                 <div class="text-center text-sm">
+                    <p class="text-slate-600">มีบัญชีอยู่แล้ว? <button id="back-to-login-from-signup" class="font-medium text-blue-600 hover:underline">เข้าสู่ระบบ</button></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Forgot Password View -->
+        <div id="forgot-password-view" class="min-h-screen bg-slate-100 flex items-center justify-center p-4 hidden">
+             <div class="w-full max-w-md bg-white p-8 rounded-2xl shadow-lg space-y-6">
+                <div class="text-center">
+                    <img src="https://lh3.googleusercontent.com/d/1b_e-SYaUDdlZqzyAwanUcYhaTx9inclg" alt="Logo" class="mx-auto mb-4 w-40 rounded-lg">
+                    <h1 class="text-2xl font-bold text-slate-800">ลืมรหัสผ่าน</h1>
+                    <p class="text-slate-500">กรอกอีเมลของคุณเพื่อรับรหัสผ่านใหม่</p>
+                </div>
+                <form id="forgot-password-form" class="space-y-4">
+                    <div>
+                        <label for="forgot-email" class="block text-sm font-medium text-slate-700 mb-1">อีเมล</label>
+                        <input type="email" id="forgot-email" name="email" required class="w-full p-3 border border-slate-300 rounded-lg shadow-sm" placeholder="กรอกอีเมลที่ลงทะเบียนไว้">
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition">ส่งรหัสผ่านใหม่</button>
+                </form>
+                 <div class="text-center text-sm">
+                    <button id="back-to-login-from-forgot" class="font-medium text-blue-600 hover:underline">กลับไปหน้าเข้าสู่ระบบ</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App Container -->
+    <div id="app-container" class="hidden">
+        <div class="flex h-screen">
+             <!-- Sidebar -->
+            <aside id="sidebar" class="sidebar-gradient text-white w-64 min-h-screen p-4 fixed lg:relative transition-transform duration-300 ease-in-out -translate-x-full lg:translate-x-0 z-50 flex flex-col">
+                <div class="flex items-center justify-end mb-4 lg:hidden">
+                     <button id="close-sidebar-btn" class="p-1 rounded-full hover:bg-sky-700">
+                        <i class="fa-solid fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="flex flex-col items-center text-center mb-8">
+                    <img src="https://lh3.googleusercontent.com/d/1b_e-SYaUDdlZqzyAwanUcYhaTx9inclg" alt="Logo" class="mx-auto mb-4 w-28 h-14 rounded-lg">
+                    <h1 class="text-2xl font-bold">ศูนย์รวมช่าง</h1>
+                </div>
+
+                <nav class="flex-grow">
+                    <ul class="space-y-2">
+                        <li><a href="#" data-view="dashboard-view" class="sidebar-item flex items-center gap-4 py-2.5 px-4 rounded-lg hover:bg-sky-700 transition-colors">
+                            <i class="fa-solid fa-chart-pie w-5 text-center"></i><span>Dashboard</span>
+                        </a></li>
+                        <li><a href="#" data-view="new-job-view" class="sidebar-item flex items-center gap-4 py-2.5 px-4 rounded-lg hover:bg-sky-700 transition-colors">
+                            <i class="fa-solid fa-plus w-5 text-center"></i><span>แจ้งงานใหม่</span>
+                        </a></li>
+                         <li id="approve-job-menu-item" style="display: none;"><a href="#" data-view="approve-job-view" class="sidebar-item flex items-center gap-4 py-2.5 px-4 rounded-lg hover:bg-sky-700 transition-colors">
+                            <i class="fa-solid fa-check-to-slot w-5 text-center"></i>
+                            <div class="flex justify-between items-center w-full">
+                                <span>อนุมัติใบงาน</span>
+                                <span id="approval-badge" class="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full hidden"></span>
+                            </div>
+                        </a></li>
+                        <li id="receive-job-menu-item" style="display: none;"><a href="#" data-view="receive-job-view" class="sidebar-item flex items-center gap-4 py-2.5 px-4 rounded-lg hover:bg-sky-700 transition-colors">
+                           <i class="fa-solid fa-list-check w-5 text-center"></i><span>รับใบงาน</span>
+                        </a></li>
+                        <li><a href="#" data-view="download-docs-view" class="sidebar-item flex items-center gap-4 py-2.5 px-4 rounded-lg hover:bg-sky-700 transition-colors">
+                            <i class="fa-solid fa-download w-5 text-center"></i><span>ดาวน์โหลดเอกสาร</span>
+                        </a></li>
+                        <li><a href="#" data-view="job-history-view" class="sidebar-item flex items-center gap-4 py-2.5 px-4 rounded-lg hover:bg-sky-700 transition-colors">
+                            <i class="fa-solid fa-history w-5 text-center"></i><span>ประวัติการแจ้งงาน</span>
+                        </a></li>
+                        <li><a href="#" data-view="settings-view" class="sidebar-item flex items-center gap-4 py-2.5 px-4 rounded-lg hover:bg-sky-700 transition-colors">
+                            <i class="fa-solid fa-gear w-5 text-center"></i><span>ตั้งค่า</span>
+                        </a></li>
+                    </ul>
+                </nav>
+
+                <div class="mt-auto pt-4 border-t border-sky-600 text-center">
+                    <div class="mb-4">
+                        <p id="user-fullname" class="font-semibold"></p>
+                        <p id="user-role" class="text-sm text-sky-200"></p>
+                    </div>
+                    <a href="#" id="logout-btn" class="sidebar-item flex items-center justify-center gap-3 py-3 px-4 rounded-lg hover:bg-sky-700 transition-colors">
+                        <i class="fa-solid fa-right-from-bracket"></i><span>ออกจากระบบ</span>
+                    </a>
+                </div>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="flex-1 p-4 lg:p-8 overflow-y-auto">
+                 <header class="flex justify-between items-center mb-8">
+                     <button id="open-sidebar-btn" class="lg:hidden p-2 rounded-md bg-white shadow">
+                         <i class="fa-solid fa-bars"></i>
+                     </button>
+                    <h1 id="view-title" class="text-2xl lg:text-3xl font-bold text-slate-800">Dashboard</h1>
+                </header>
+                
+                <div id="view-container">
+                    <!-- Dashboard View -->
+                    <div id="dashboard-view" class="view-content">
+                        <!-- Stats Cards -->
+                        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+                            <div class="bg-yellow-100 p-4 rounded-lg shadow-sm text-center">
+                                <p class="text-sm text-yellow-800 font-semibold">รออนุมัติ</p>
+                                <p id="count-pending-review" class="text-3xl font-bold text-yellow-900 mt-1">0</p>
+                            </div>
+                            <div class="bg-sky-100 p-4 rounded-lg shadow-sm text-center">
+                                <p class="text-sm text-sky-800 font-semibold">รอรับงาน</p>
+                                <p id="count-pending-accept" class="text-3xl font-bold text-sky-900 mt-1">0</p>
+                            </div>
+                            <div class="bg-blue-100 p-4 rounded-lg shadow-sm text-center">
+                                <p class="text-sm text-blue-800 font-semibold">รับงานแล้ว</p>
+                                <p id="count-in-progress" class="text-3xl font-bold text-blue-900 mt-1">0</p>
+                            </div>
+                            <div class="bg-emerald-100 p-4 rounded-lg shadow-sm text-center">
+                                <p class="text-sm text-emerald-800 font-semibold">ปิดงานแล้ว</p>
+                                <p id="count-closed" class="text-3xl font-bold text-emerald-900 mt-1">0</p>
+                            </div>
+                            <div class="bg-orange-100 p-4 rounded-lg shadow-sm text-center">
+                                <p class="text-sm text-orange-800 font-semibold">ไม่รับงาน</p>
+                                <p id="count-declined" class="text-3xl font-bold text-orange-900 mt-1">0</p>
+                            </div>
+                            <div class="bg-rose-100 p-4 rounded-lg shadow-sm text-center">
+                                <p class="text-sm text-rose-800 font-semibold">ไม่อนุมัติ</p>
+                                <p id="count-rejected" class="text-3xl font-bold text-rose-900 mt-1">0</p>
+                            </div>
+                        </div>
+
+                        <!-- Recent Activity Table -->
+                        <div class="form-section">
+                            <h2 class="form-section-title">รายการดำเนินงานล่าสุด</h2>
+                            <div class="mb-4">
+                                <label for="dashboard-search-input" class="sr-only">ค้นหา</label>
+                                <!-- เพิ่ม grid layout เพื่อจัดวางช่องค้นหาและวันที่ -->
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                    <input type="text" id="dashboard-search-input" placeholder="ค้นหาด้วยเลขที่, ชื่อลูกค้า, หรือผู้แจ้ง..." class="sm:col-span-2 w-full p-2 border border-slate-300 rounded-md shadow-sm">
+                                    <!-- เพิ่มช่อง input สำหรับวันที่ -->
+                                    <input type="date" id="dashboard-date-input" class="w-full p-2 border border-slate-300 rounded-md shadow-sm">
+                                </div>
+                            </div>
+                            <!-- START CHANGE: เพิ่มปุ่มตัวกรองสถานะ -->
+                            <div class="flex flex-wrap gap-2 mb-4" id="dashboard-filter-buttons">
+                                <button data-filter="all" class="filter-btn active px-4 py-2 text-sm font-semibold rounded-lg">ทั้งหมด</button>
+                                <button data-filter="pending-review" class="filter-btn px-4 py-2 text-sm font-semibold rounded-lg">รอตรวจสอบ</button>
+                                <button data-filter="pending-accept" class="filter-btn px-4 py-2 text-sm font-semibold rounded-lg">รอรับงาน</button>
+                                <button data-filter="in-progress" class="filter-btn px-4 py-2 text-sm font-semibold rounded-lg">รับงานแล้ว</button>
+                                <button data-filter="closed" class="filter-btn px-4 py-2 text-sm font-semibold rounded-lg">ปิดงานแล้ว</button>
+                            </div>
+                            <!-- END CHANGE -->
+                            <div class="overflow-x-auto">
+                                <table id="activity-table" class="w-full text-sm">
+                                    <thead class="bg-slate-50 text-slate-600 uppercase text-xs">
+                                        <tr>
+                                            <th class="p-3 text-left">วันที่แจ้ง</th>
+                                            <th class="p-3 text-left">ลูกค้า</th>
+                                            <th class="p-3 text-left">ประเภทใบงาน</th>
+                                            <th class="p-3 text-left">ผู้แจ้ง</th>
+                                            <th class="p-3 text-left">รายละเอียดการแจ้งงาน</th>
+                                            <th class="p-3 text-left">สถานะ</th>
+                                            <th class="p-3 text-left">รายละเอียดการปฏิบัติงาน</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Data will be populated by JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div id="activity-pagination" class="mt-4 flex justify-center items-center space-x-4">
+                                <!-- Pagination controls will be populated by JS -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- New Job View -->
+                    <div id="new-job-view" class="view-content hidden">
+                        <form id="jobRequestForm">
+                            <!-- ข้อมูลผู้แจ้งงาน -->
+                            <div class="form-section">
+                                <h2 class="form-section-title">ข้อมูลผู้แจ้งงาน</h2>
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                    <div>
+                                        <label for="requestDate" class="block text-sm font-medium text-slate-700 mb-1">วันที่แจ้ง / เวลา</label>
+                                        <input type="datetime-local" id="requestDate" name="requestDate" class="w-full p-2 border border-slate-300 rounded-md shadow-sm" required>
+                                    </div>
+                                    <div>
+                                        <label for="requesterName" class="block text-sm font-medium text-slate-700 mb-1">ชื่อผู้แจ้ง</label>
+                                        <input type="text" id="requesterName" name="requesterName" class="w-full p-2 border border-slate-300 rounded-md shadow-sm bg-slate-100" readonly>
+                                    </div>
+                                    <div>
+                                        <label for="requesterPhone" class="block text-sm font-medium text-slate-700 mb-1">เบอร์โทรผู้แจ้ง</label>
+                                        <input type="tel" id="requesterPhone" name="requesterPhone" class="w-full p-2 border border-slate-300 rounded-md shadow-sm bg-slate-100" readonly>
+                                    </div>
+                                    <div>
+                                        <label for="department" class="block text-sm font-medium text-slate-700 mb-1">หน่วยงาน</label>
+                                        <input type="text" id="department" name="department" class="w-full p-2 border border-slate-300 rounded-md shadow-sm bg-slate-100" readonly>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- รายละเอียดการแจ้งงาน -->
+                            <div class="form-section">
+                                <h2 class="form-section-title">รายละเอียดการแจ้งงาน</h2>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                                    <div>
+                                        <label for="jobType" class="block text-sm font-medium text-slate-700 mb-1">ประเภทงาน</label>
+                                        <select id="jobType" name="jobType" class="w-full p-2 border border-slate-300 rounded-md shadow-sm" required>
+                                            <!-- Options will be populated by JS -->
+                                        </select>
+                                        <input type="text" id="jobTypeOther" name="jobTypeOther" placeholder="โปรดระบุประเภทงานอื่นๆ" class="w-full p-2 border border-slate-300 rounded-md shadow-sm mt-2 hidden">
+                                    </div>
+                                    <div>
+                                        <label for="problemDescription" class="block text-sm font-medium text-slate-700 mb-1">รายละเอียดการแจ้งงาน</label>
+                                        <textarea id="problemDescription" name="problemDescription" rows="4" class="w-full p-2 border border-slate-300 rounded-md shadow-sm" required></textarea>
+                                    </div>
+                                </div>
+                                <div class="mt-6">
+                                    <h3 class="font-semibold text-slate-800 mb-3">รายการเครื่องจักร</h3>
+                                    <div id="machineListContainer" class="space-y-4">
+                                        <!-- Machine items will be added here by JS -->
+                                    </div>
+                                    <button type="button" id="addMachineBtn" class="mt-4 px-4 py-2 bg-sky-100 text-sky-700 font-semibold rounded-lg hover:bg-sky-200 transition text-sm">
+                                        <i class="fa-solid fa-plus mr-2"></i>เพิ่มรายการเครื่องจักร
+                                    </button>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                                     <div>
+                                        <label for="serviceDate" class="block text-sm font-medium text-slate-700 mb-1">วันที่ต้องเข้าพื้นที่</label>
+                                        <input type="date" id="serviceDate" name="serviceDate" class="w-full p-2 border border-slate-300 rounded-md shadow-sm" required>
+                                    </div>
+                                    <div>
+                                        <label for="serviceTime" class="block text-sm font-medium text-slate-700 mb-1">เวลานัดหมาย</label>
+                                        <input type="time" id="serviceTime" name="serviceTime" class="w-full p-2 border border-slate-300 rounded-md shadow-sm" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ข้อมูลลูกค้า -->
+                            <div class="form-section">
+                                <h2 class="form-section-title">ข้อมูลลูกค้า</h2>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                                    <!-- สำหรับเปิดบิล -->
+                                    <div class="space-y-4">
+                                        <h3 class="form-subsection-title">สำหรับเปิดบิล</h3>
+                                        <div>
+                                            <label for="billingName" class="block text-sm font-medium text-slate-700 mb-1">ชื่อลูกค้า (ชื่อ-สกุล)</label>
+                                            <input type="text" id="billingName" name="billingName" list="customer-billing-list" class="w-full p-2 border border-slate-300 rounded-md shadow-sm" required>
+                                            <datalist id="customer-billing-list"></datalist>
+                                        </div>
+                                        <div>
+                                            <label for="billingPhone" class="block text-sm font-medium text-slate-700 mb-1">เบอร์โทรลูกค้า</label>
+                                            <input type="tel" id="billingPhone" name="billingPhone" class="w-full p-2 border border-slate-300 rounded-md shadow-sm" required pattern="[0-9]*" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                                        </div>
+                                         <div>
+                                            <label for="billingAddress" class="block text-sm font-medium text-slate-700 mb-1">ที่อยู่ลูกค้า</label>
+                                            <textarea id="billingAddress" name="billingAddress" rows="3" class="w-full p-2 border border-slate-300 rounded-md shadow-sm" required></textarea>
+                                        </div>
+                                    </div>
+                                    <!-- สำหรับเข้าบริการ -->
+                                    <div class="space-y-4">
+                                        <div class="flex justify-between items-center">
+                                            <h3 class="form-subsection-title">สำหรับเข้าบริการ</h3>
+                                            <label for="sameAsBilling" class="flex items-center cursor-pointer">
+                                                <input type="checkbox" id="sameAsBilling" name="sameAsBilling" class="h-4 w-4 rounded border-gray-300 text-sky-600 focus:ring-sky-500">
+                                                <span class="ml-2 text-sm text-slate-700">ใช้ข้อมูลเดียวกัน</span>
+                                            </label>
+                                        </div>
+                                        <div>
+                                            <label for="serviceName" class="block text-sm font-medium text-slate-700 mb-1">ชื่อลูกค้า (ชื่อ-สกุล)</label>
+                                            <input type="text" id="serviceName" name="serviceName" class="w-full p-2 border border-slate-300 rounded-md shadow-sm" required>
+                                        </div>
+                                        <div>
+                                            <label for="servicePhone" class="block text-sm font-medium text-slate-700 mb-1">เบอร์โทรลูกค้า</label>
+                                            <input type="tel" id="servicePhone" name="servicePhone" class="w-full p-2 border border-slate-300 rounded-md shadow-sm" required pattern="[0-9]*" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                                        </div>
+                                         <div>
+                                            <label for="serviceAddress" class="block text-sm font-medium text-slate-700 mb-1">ที่อยู่ลูกค้า</label>
+                                            <textarea id="serviceAddress" name="serviceAddress" rows="3" class="w-full p-2 border border-slate-300 rounded-md shadow-sm" required></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                             <!-- ข้อมูลงานบริการ -->
+                            <div class="form-section">
+                                <h2 class="form-section-title">ข้อมูลงานบริการ</h2>
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    <div>
+                                        <label for="customerType" class="block text-sm font-medium text-slate-700 mb-1">ประเภทลูกค้า</label>
+                                        <select id="customerType" name="customerType" class="w-full p-2 border border-slate-300 rounded-md shadow-sm" required>
+                                            <!-- Options populated by JS -->
+                                        </select>
+                                        <input type="text" id="customerTypeOther" name="customerTypeOther" placeholder="โปรดระบุประเภทลูกค้าอื่นๆ" class="w-full p-2 border border-slate-300 rounded-md shadow-sm mt-2 hidden">
+                                    </div>
+                                    <div>
+                                        <label for="serviceStartDate" class="block text-sm font-medium text-slate-700 mb-1">วันที่เริ่มบริการ</label>
+                                        <input type="date" id="serviceStartDate" name="serviceStartDate" class="w-full p-2 border border-slate-300 rounded-md shadow-sm" required>
+                                    </div>
+                                     <div>
+                                        <label for="contractPeriod" class="block text-sm font-medium text-slate-700 mb-1">ระยะเวลาสัญญา/ประกัน (เดือน)</label>
+                                        <input type="number" id="contractPeriod" name="contractPeriod" class="w-full p-2 border border-slate-300 rounded-md shadow-sm" required>
+                                    </div>
+                                    <div>
+                                        <label for="serviceEndDate" class="block text-sm font-medium text-slate-700 mb-1">วันที่สิ้นสุดบริการ</label>
+                                        <input type="date" id="serviceEndDate" name="serviceEndDate" class="w-full p-2 border border-slate-300 rounded-md shadow-sm bg-slate-100" readonly>
+                                    </div>
+                                    <div>
+                                        <label for="serviceFrequency" class="block text-sm font-medium text-slate-700 mb-1">ความถี่การเข้าบริการ</label>
+                                        <input type="text" id="serviceFrequency" name="serviceFrequency" class="w-full p-2 border border-slate-300 rounded-md shadow-sm" required>
+                                    </div>
+                                    <div>
+                                        <label for="billToDepartment" class="block text-sm font-medium text-slate-700 mb-1">เรียกเก็บค่าใช้จ่ายกับแผนก</label>
+                                        <input type="text" id="billToDepartment" name="billToDepartment" class="w-full p-2 border border-slate-300 rounded-md shadow-sm" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ไฟล์แนบ -->
+                            <div class="form-section">
+                                <h2 class="form-section-title">ไฟล์แนบ (ถ้ามี)</h2>
+                                <label for="fileAttachment" class="inline-block mb-4 px-4 py-2 bg-sky-600 text-white font-semibold rounded-lg hover:bg-sky-700 transition text-sm cursor-pointer">
+                                    <i class="fa-solid fa-paperclip mr-2"></i>เลือกไฟล์ (เพิ่มไฟล์ได้เรื่อยๆ)
+                                </label>
+                                <input type="file" id="fileAttachment" name="fileAttachment" accept="image/*,.pdf" multiple class="hidden"/>
+                                <div id="image-preview-container" class="bg-slate-100 p-4 rounded-lg">
+                                    <p id="image-preview-placeholder" class="text-slate-500 text-center">ตัวอย่างไฟล์รูปภาพ (4 รูปต่อ 1 หน้า A4) จะแสดงที่นี่</p>
+                                </div>
+                                <div id="other-files-list" class="text-sm text-slate-600 mt-4 space-y-1"></div>
+                            </div>
+                            
+                            <!-- Signature Section -->
+                            <div class="form-section">
+                                <h2 class="form-section-title">ลายเซ็นผู้แจ้งงาน</h2>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                                    <div class="w-full aspect-video bg-slate-200 rounded-lg border-2 border-dashed border-slate-300 relative">
+                                        <img id="saved-signature-img-job" src="" alt="Saved Signature" class="absolute inset-0 w-full h-full object-contain p-2 hidden">
+                                        <canvas id="signature-pad" class="w-full h-full"></canvas>
+                                    </div>
+                                    <div class="flex flex-col space-y-3">
+                                        <p class="text-sm text-slate-500">คุณสามารถวาดลายเซ็นใหม่ หรือใช้ลายเซ็นที่บันทึกไว้ (ถ้ามี)</p>
+                                        <button type="button" id="clear-signature" class="px-4 py-2 bg-slate-200 text-slate-700 font-semibold rounded-lg hover:bg-slate-300 transition text-sm">
+                                            <i class="fa-solid fa-eraser mr-2"></i>ล้างลายเซ็น
+                                        </button>
+                                        <button type="button" id="use-saved-sig-btn" class="px-4 py-2 bg-sky-100 text-sky-700 font-semibold rounded-lg hover:bg-sky-200 transition text-sm hidden">
+                                            <i class="fa-solid fa-floppy-disk mr-2"></i>ใช้ลายเซ็นที่บันทึกไว้
+                                        </button>
+                                        <button type="button" id="draw-new-sig-btn" class="px-4 py-2 bg-amber-100 text-amber-700 font-semibold rounded-lg hover:bg-amber-200 transition text-sm hidden">
+                                             <i class="fa-solid fa-pencil mr-2"></i>วาดลายเซ็นใหม่
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-8 flex justify-end">
+                                <button type="submit" class="px-8 py-3 bg-sky-600 text-white font-bold rounded-lg shadow-md hover:bg-sky-700 transition-transform transform hover:scale-105">ส่งใบแจ้งงาน</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Approve Job View -->
+                    <div id="approve-job-view" class="view-content hidden">
+                        <div class="form-section">
+                            <h2 class="form-section-title">รายการใบงานรออนุมัติ</h2>
+                             <div class="mb-4">
+                                <label for="approval-jobs-search-input" class="sr-only">ค้นหาใบงาน</label>
+                                <input type="text" id="approval-jobs-search-input" placeholder="ค้นหาด้วยเลขที่, ชื่อลูกค้า, หรือผู้แจ้ง..." class="w-full p-2 border border-slate-300 rounded-md shadow-sm">
+                </div>
+                <!-- เปลี่ยน class จาก "flex space-x-2" เป็น "flex flex-wrap gap-2" เพื่อให้ปุ่มตัดบรรทัดได้สวยงาม -->
+                <div class="flex flex-wrap gap-2 mb-4" id="approval-filter-buttons">
+                    <button data-filter="all" class="filter-btn active px-4 py-2 text-sm font-semibold rounded-lg">ทั้งหมด</button>
+                    <button data-filter="urgent" class="filter-btn px-4 py-2 text-sm font-semibold rounded-lg">งานด่วน</button>
+                                <button data-filter="normal" class="filter-btn px-4 py-2 text-sm font-semibold rounded-lg">งานปกติ</button>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table id="approval-jobs-table" class="w-full text-sm text-left text-slate-500">
+                                    <thead class="text-xs text-slate-700 uppercase bg-slate-50">
+                                        <tr>
+                                            <th scope="col" class="px-6 py-3">วันที่แจ้งงาน</th>
+                                            <th scope="col" class="px-6 py-3">เลขที่เอกสาร</th>
+                                            <th scope="col" class="px-6 py-3">ชื่อลูกค้า</th>
+                                            <th scope="col" class="px-6 py-3">ประเภทงาน</th>
+                                            <th scope="col" class="px-6 py-3">หน่วยงานผู้แจ้ง</th>
+                                            <th scope="col" class="px-6 py-3">ชื่อผู้แจ้ง</th>
+                                            <th scope="col" class="px-6 py-3">ลักษณะงาน</th>
+                                            <th scope="col" class="px-6 py-3">สถานะ</th>
+                                            <th scope="col" class="px-6 py-3">จัดการ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="receive-job-view" class="view-content hidden">
+                        <div class="form-section">
+                            <h2 class="form-section-title">รับ/ปิดใบงาน</h2>
+                            <!-- เพิ่มส่วนค้นหาและตัวกรอง -->
+                            <div class="mb-4">
+                                <label for="receive-jobs-search-input" class="sr-only">ค้นหาใบงาน</label>
+                                <input type="text" id="receive-jobs-search-input" placeholder="ค้นหาด้วยเลขที่, ชื่อลูกค้า, หรือผู้แจ้ง..." class="w-full p-2 border border-slate-300 rounded-md shadow-sm">
+                            </div>
+                            <!-- เปลี่ยน class จาก "flex space-x-2" เป็น "flex flex-wrap gap-2" เพื่อให้ปุ่มตัดบรรทัดได้สวยงาม -->
+                            <div class="flex flex-wrap gap-2 mb-6" id="receive-filter-buttons">
+                                <button data-filter="all" class="filter-btn active px-4 py-2 text-sm font-semibold rounded-lg">ทั้งหมด</button>
+                                <button data-filter="urgent" class="filter-btn px-4 py-2 text-sm font-semibold rounded-lg">งานด่วน</button>
+                                <button data-filter="normal" class="filter-btn px-4 py-2 text-sm font-semibold rounded-lg">งานปกติ</button>
+                            </div>
+                            <!-- จบส่วนค้นหาและตัวกรอง -->
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                <!-- Column 1: Jobs to Receive -->
+                                <div>
+                                    <h3 class="text-lg font-semibold text-slate-700 mb-3 flex items-center">
+                                        <i class="fa-solid fa-folder-open text-sky-600 mr-3"></i>
+                                        ใบงานที่รอรับ
+                                    </h3>
+                                    <div id="jobs-to-receive-list" class="bg-slate-50 p-4 rounded-lg min-h-[200px] space-y-3"></div>
+                                </div>
+                    
+                                <!-- Column 2: Jobs to Close -->
+                                <div>
+                                    <h3 class="text-lg font-semibold text-slate-700 mb-3 flex items-center">
+                                        <i class="fa-solid fa-check-double text-emerald-600 mr-3"></i>
+                                        ใบงานที่ต้องปิด
+                                    </h3>
+                                    <div id="jobs-to-close-list" class="bg-slate-50 p-4 rounded-lg min-h-[200px] space-y-3"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Download Docs View -->
+                    <div id="download-docs-view" class="view-content hidden">
+                         <div class="form-section">
+                            <h2 class="form-section-title">รายการใบแจ้งงานทั้งหมด</h2>
+                             <div class="mb-4">
+                                <label for="jobs-search-input" class="sr-only">ค้นหาใบงาน</label>
+                                <!-- เพิ่ม grid layout เพื่อจัดวางช่องค้นหาและวันที่ -->
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                    <input type="text" id="jobs-search-input" placeholder="ค้นหาด้วยเลขที่, ชื่อลูกค้า, หรือผู้แจ้ง..." class="sm:col-span-2 w-full p-2 border border-slate-300 rounded-md shadow-sm">
+                                    <!-- เพิ่มช่อง input สำหรับวันที่ -->
+                                    <input type="date" id="jobs-date-input" class="w-full p-2 border border-slate-300 rounded-md shadow-sm">
+                                </div>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table id="jobs-table" class="w-full text-sm text-left text-slate-500">
+                                    <thead class="text-xs text-slate-700 uppercase bg-slate-50">
+                                        <tr>
+                                            <th scope="col" class="px-6 py-3">วันที่แจ้งงาน</th>
+                                            <th scope="col" class="px-6 py-3">เลขที่เอกสาร</th>
+                                            <th scope="col" class="px-6 py-3">ชื่อลูกค้า</th>
+                                            <th scope="col" class="px-6 py-3">ชื่อผู้แจ้ง</th>
+                                            <th scope="col" class="px-6 py-3">สถานะ</th>
+                                            <th scope="col" class="px-6 py-3">จัดการ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="job-history-view" class="view-content hidden">
+                        <div class="form-section">
+                            <h2 class="form-section-title">ประวัติการแจ้งงาน</h2>
+                            <div class="mb-4">
+                                <label for="history-search-input" class="sr-only">ค้นหาด้วยชื่อลูกค้า</label>
+                                <input type="text" id="history-search-input" placeholder="ค้นหาด้วยชื่อลูกค้า..." class="w-full p-2 border border-slate-300 rounded-md shadow-sm">
+                            </div>
+                            <div id="job-history-container" class="space-y-4"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Settings View -->
+                    <div id="settings-view" class="view-content hidden">
+                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <!-- Card 1: Profile Settings -->
+                            <div data-view="profile-settings-view" class="settings-card bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer">
+                                <div class="flex items-center gap-4">
+                                    <div class="bg-sky-100 p-3 rounded-full">
+                                        <i class="fa-solid fa-user-pen text-sky-600 text-xl"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-semibold text-lg text-slate-800">ตั้งค่าข้อมูลส่วนตัว</h3>
+                                        <p class="text-sm text-slate-500">แก้ไขชื่อ, อีเมล, รหัสผ่าน, และลายเซ็น</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Card 2: User Permissions -->
+                            <div id="user-permissions-card" data-view="user-permissions-view" class="settings-card bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer hidden">
+                                <div class="flex items-center gap-4">
+                                    <div class="bg-emerald-100 p-3 rounded-full">
+                                        <i class="fa-solid fa-user-shield text-emerald-600 text-xl"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-semibold text-lg text-slate-800">ตั้งค่าสิทธิ์ผู้ใช้</h3>
+                                        <p class="text-sm text-slate-500">จัดการบทบาทและสิทธิ์การเข้าถึง</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Card 3: Approver Settings -->
+                             <div id="approver-settings-card" data-view="approver-settings-view" class="settings-card bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer hidden">
+                                <div class="flex items-center gap-4">
+                                     <div class="bg-amber-100 p-3 rounded-full">
+                                        <i class="fa-solid fa-user-check text-amber-600 text-xl"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-semibold text-lg text-slate-800">ตั้งค่าสิทธิ์ผู้อนุมัติ</h3>
+                                        <p class="text-sm text-slate-500">กำหนดสายการอนุมัติใบงาน</p>
+                                    </div>
+                                </div>
+                            </div>
+                             <!-- Card 4: Customer Data -->
+                            <div data-view="customer-management-view" class="settings-card bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer">
+                                <div class="flex items-center gap-4">
+                                    <div class="bg-violet-100 p-3 rounded-full">
+                                        <i class="fa-solid fa-users-gear text-violet-600 text-xl"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-semibold text-lg text-slate-800">จัดการข้อมูลลูกค้า</h3>
+                                        <p class="text-sm text-slate-500">เพิ่ม, แก้ไข, หรือลบข้อมูลลูกค้า</p>
+                                    </div>
+                                </div>
+                            </div>
+                             <!-- Card 5: Dropdown Settings -->
+                            <div data-view="dropdown-settings-view" class="settings-card bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer">
+                                <div class="flex items-center gap-4">
+                                    <div class="bg-rose-100 p-3 rounded-full">
+                                        <i class="fa-solid fa-list-ul text-rose-600 text-xl"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-semibold text-lg text-slate-800">ตั้งค่าดรอปดาวน์</h3>
+                                        <p class="text-sm text-slate-500">จัดการตัวเลือกในฟอร์มต่างๆ</p>
+                                    </div>
+                                </div>
+                            </div>
+                         </div>
+                    </div>
+
+                    <!-- Customer Management View -->
+                    <div id="customer-management-view" class="view-content hidden">
+                        <button class="back-to-settings-btn mb-6 text-sm font-medium text-sky-600 hover:underline"><i class="fa-solid fa-arrow-left mr-2"></i>กลับไปหน้าตั้งค่า</button>
+                        <div class="form-section">
+                            <div class="flex justify-between items-center mb-4">
+                                <h2 class="form-section-title !mb-0 !border-0">ข้อมูลลูกค้าทั้งหมด</h2>
+                                <button id="add-customer-btn" class="px-4 py-2 bg-sky-600 text-white font-semibold rounded-lg shadow-sm hover:bg-sky-700 transition">
+                                    <i class="fa-solid fa-plus mr-2"></i>เพิ่มลูกค้าใหม่
+                                </button>
+                            </div>
+                             <div class="mb-4">
+                                <label for="customer-search-input" class="sr-only">ค้นหาลูกค้า</label>
+                                <input type="text" id="customer-search-input" placeholder="ค้นหาด้วยชื่อ, เบอร์โทร, หรือที่อยู่..." class="w-full p-2 border border-slate-300 rounded-md shadow-sm">
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table id="customers-table" class="w-full text-sm text-left text-slate-500">
+                                    <thead class="text-xs text-slate-700 uppercase bg-slate-50">
+                                        <tr>
+                                            <th scope="col" class="px-6 py-3">ชื่อลูกค้า (สำหรับเปิดบิล)</th>
+                                            <th scope="col" class="px-6 py-3">เบอร์โทร</th>
+                                            <th scope="col" class="px-6 py-3">ที่อยู่</th>
+                                            <th scope="col" class="px-6 py-3">จัดการ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                     <!-- User Permissions View -->
+                    <div id="user-permissions-view" class="view-content hidden">
+                        <button class="back-to-settings-btn mb-6 text-sm font-medium text-sky-600 hover:underline"><i class="fa-solid fa-arrow-left mr-2"></i>กลับไปหน้าตั้งค่า</button>
+                        <div class="form-section">
+                            <h2 class="form-section-title">จัดการสิทธิ์ผู้ใช้</h2>
+                             <div class="mb-4">
+                                <label for="user-search-input" class="sr-only">ค้นหาผู้ใช้</label>
+                                <input type="text" id="user-search-input" placeholder="ค้นหาด้วยชื่อ, อีเมล, หรือแผนก..." class="w-full p-2 border border-slate-300 rounded-md shadow-sm">
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table id="users-table" class="w-full text-sm text-left text-slate-500">
+                                    <thead class="text-xs text-slate-700 uppercase bg-slate-50">
+                                        <tr>
+                                            <th scope="col" class="px-6 py-3">ชื่อ-สกุล</th>
+                                            <th scope="col" class="px-6 py-3">Email</th>
+                                            <th scope="col" class="px-6 py-3">แผนก/หน่วยงาน</th>
+                                            <th scope="col" class="px-6 py-3">สิทธิ์</th>
+                                            <th scope="col" class="px-6 py-3">จัดการ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Approver Settings View -->
+                    <div id="approver-settings-view" class="view-content hidden">
+                        <button class="back-to-settings-btn mb-6 text-sm font-medium text-sky-600 hover:underline"><i class="fa-solid fa-arrow-left mr-2"></i>กลับไปหน้าตั้งค่า</button>
+                        <div class="form-section">
+                            <h2 class="form-section-title">ตั้งค่าสิทธิ์ผู้อนุมัติและผู้รับงาน</h2>
+                            <div class="mb-4">
+                                <label for="approver-search-input" class="sr-only">ค้นหาผู้ใช้</label>
+                                <input type="text" id="approver-search-input" placeholder="ค้นหาด้วยชื่อ, อีเมล, หรือแผนก..." class="w-full p-2 border border-slate-300 rounded-md shadow-sm">
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table id="approvers-table" class="w-full text-sm text-left text-slate-500">
+                                    <thead class="text-xs text-slate-700 uppercase bg-slate-50">
+                                        <tr>
+                                            <th scope="col" class="px-6 py-3">ชื่อ-สกุล</th>
+                                            <th scope="col" class="px-6 py-3">Email</th>
+                                            <th scope="col" class="px-6 py-3">แผนก/หน่วยงาน</th>
+                                            <th scope="col" class="px-6 py-3">ระดับการอนุมัติ</th>
+                                            <th scope="col" class="px-6 py-3 text-center">ผู้มีสิทธิ์รับงาน</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <!-- Profile Settings View -->
+                    <div id="profile-settings-view" class="view-content hidden">
+                        <button class="back-to-settings-btn mb-6 text-sm font-medium text-sky-600 hover:underline"><i class="fa-solid fa-arrow-left mr-2"></i>กลับไปหน้าตั้งค่า</button>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            <!-- Edit Profile Form -->
+                            <div class="form-section">
+                                <h2 class="form-section-title">ข้อมูลส่วนตัว</h2>
+                                <form id="profile-update-form" class="space-y-4">
+                                    <div>
+                                        <label for="profile-fullname" class="block text-sm font-medium text-slate-700 mb-1">ชื่อ-สกุล</label>
+                                        <input type="text" id="profile-fullname" name="fullName" required class="w-full p-2 border border-slate-300 rounded-md shadow-sm">
+                                    </div>
+                                     <div>
+                                        <label for="profile-email" class="block text-sm font-medium text-slate-700 mb-1">อีเมล (ไม่สามารถแก้ไขได้)</label>
+                                        <input type="email" id="profile-email" name="email" readonly class="w-full p-2 border border-slate-300 rounded-md shadow-sm bg-slate-100 cursor-not-allowed">
+                                    </div>
+                                    <div>
+                                        <label for="profile-phone" class="block text-sm font-medium text-slate-700 mb-1">เบอร์โทร</label>
+                                        <input type="tel" id="profile-phone" name="phone" required class="w-full p-2 border border-slate-300 rounded-md shadow-sm" pattern="[0-9]*" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                                    </div>
+                                    <div>
+                                        <label for="profile-department" class="block text-sm font-medium text-slate-700 mb-1">แผนก/หน่วยงาน</label>
+                                        <input type="text" id="profile-department" name="userDepartment" required class="w-full p-2 border border-slate-300 rounded-md shadow-sm">
+                                    </div>
+                                    <div>
+                                        <label for="profile-new-password" class="block text-sm font-medium text-slate-700 mb-1">รหัสผ่านใหม่ (ถ้าไม่เปลี่ยนให้ว่างไว้)</label>
+                                        <input type="password" id="profile-new-password" name="newPassword" class="w-full p-2 border border-slate-300 rounded-md shadow-sm">
+                                    </div>
+                                    <div>
+                                        <label for="profile-confirm-password" class="block text-sm font-medium text-slate-700 mb-1">ยืนยันรหัสผ่านใหม่</label>
+                                        <input type="password" id="profile-confirm-password" name="confirmNewPassword" class="w-full p-2 border border-slate-300 rounded-md shadow-sm">
+                                    </div>
+                                    <div class="pt-4">
+                                        <button type="submit" class="w-full px-6 py-2.5 bg-sky-600 text-white font-semibold rounded-lg shadow-md hover:bg-sky-700 transition">บันทึกข้อมูลส่วนตัว</button>
+                                    </div>
+                                </form>
+                            </div>
+                            <!-- Edit Signature Section -->
+                             <div class="form-section">
+                                <h2 class="form-section-title">แก้ไขลายเซ็น</h2>
+                                <form id="signature-update-form" class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-2">ลายเซ็นปัจจุบัน</label>
+                                        <div class="w-full aspect-video bg-slate-100 rounded-lg border border-slate-300 flex items-center justify-center">
+                                            <img id="current-signature-img" src="" alt="Current Signature" class="max-w-full max-h-full hidden">
+                                            <p id="no-signature-text" class="text-slate-500">ยังไม่มีลายเซ็น</p>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-2">วาดลายเซ็นใหม่</label>
+                                        <div class="w-full aspect-video bg-slate-200 rounded-lg border-2 border-dashed border-slate-300">
+                                            <canvas id="new-signature-pad" class="w-full h-full"></canvas>
+                                        </div>
+                                        <div class="flex justify-between items-center mt-2">
+                                            <button type="button" id="clear-new-signature" class="text-sm text-slate-600 hover:text-red-600">ล้าง</button>
+                                            <label class="text-sm text-slate-600 hover:text-sky-600 cursor-pointer">
+                                                <span><i class="fa-solid fa-upload mr-1"></i> อัปโหลด</span>
+                                                <input type="file" id="upload-signature-input" class="hidden" accept="image/png">
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="pt-4">
+                                        <button type="submit" class="w-full px-6 py-2.5 bg-emerald-600 text-white font-semibold rounded-lg shadow-md hover:bg-emerald-700 transition">บันทึกลายเซ็น</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dropdown Settings View -->
+                    <div id="dropdown-settings-view" class="view-content hidden">
+                        <button class="back-to-settings-btn mb-6 text-sm font-medium text-sky-600 hover:underline"><i class="fa-solid fa-arrow-left mr-2"></i>กลับไปหน้าตั้งค่า</button>
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            <!-- Job Types -->
+                            <div class="form-section">
+                                <h2 class="form-section-title">ประเภทงาน</h2>
+                                <div id="jobTypes-list" class="space-y-2 mb-4"></div>
+                                <button type="button" id="show-add-jobType-modal" class="w-full px-4 py-2 bg-sky-600 text-white font-semibold rounded-lg shadow-sm hover:bg-sky-700 transition">
+                                    <i class="fa-solid fa-plus mr-2"></i>เพิ่มประเภทงาน
+                                </button>
+                            </div>
+                             <!-- Customer Types -->
+                            <div class="form-section">
+                                <h2 class="form-section-title">ประเภทลูกค้า</h2>
+                                <div id="customerTypes-list" class="space-y-2 mb-4"></div>
+                                <button type="button" id="show-add-customerType-modal" class="w-full px-4 py-2 bg-sky-600 text-white font-semibold rounded-lg shadow-sm hover:bg-sky-700 transition">
+                                    <i class="fa-solid fa-plus mr-2"></i>เพิ่มประเภทลูกค้า
+                                </button>
+                            </div>
+                             <!-- Departments -->
+                            <div class="form-section">
+                                <h2 class="form-section-title">แผนก/หน่วยงาน</h2>
+                                <div id="departments-list" class="space-y-2 mb-4"></div>
+                                <button type="button" id="show-add-department-modal" class="w-full px-4 py-2 bg-sky-600 text-white font-semibold rounded-lg shadow-sm hover:bg-sky-700 transition">
+                                    <i class="fa-solid fa-plus mr-2"></i>เพิ่มแผนก/หน่วยงาน
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Job Preview Modal -->
+    <div id="job-preview-modal">
+        <div class="preview-modal-content relative">
+            <div id="preview-loader" class="preview-loader-overlay hidden">
+                <div class="spinner"></div>
+            </div>
+            <div class="flex justify-between items-center mb-4">
+                 <h2 class="text-2xl font-bold text-slate-800">ตัวอย่างใบแจ้งงาน</h2>
+                 <button id="close-preview-modal" class="text-slate-500 hover:text-red-600 text-2xl">&times;</button>
+            </div>
+            <div id="a4-wrapper">
+                <!-- A4 pages will be dynamically inserted here by JS -->
+            </div>
+             <div id="preview-modal-footer" class="mt-4 text-right space-x-2"></div>
+        </div>
+    </div>
+    
+    <script src="app.js"></script>
+</body>
+</html>
