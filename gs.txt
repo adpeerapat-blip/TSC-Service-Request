@@ -1,0 +1,1291 @@
+// --- SCRIPT INITIALIZATION ---
+// --- ค่าตั้งต้น ---
+const SHEET_ID = '1LB25jTVZ4tZpH6Z0Gfh57ovj8D58ul5Lb3wKnMjlKVc';
+const ATTACHMENT_FOLDER_ID = '1AdNuEn8SsCUuK0IFwE22NCq00Z_xKIgJ';
+const SIGNATURE_FOLDER_ID = '1RsB-ofdKBxZgPWbgbiiDQVXb6O5LkS1M';
+const JOB_DATA_SHEET_NAME = 'DATA ใบงาน';
+const USER_DATA_SHEET_NAME = 'Users';
+const DROPDOWN_SHEET_NAME = 'Dropdowns';
+const CUSTOMER_DATA_SHEET_NAME = 'Customers';
+
+// --- ตั้งค่า FIREBASE ---
+const FIREBASE_DB_URL = 'https://tsc-work-notification-default-rtdb.asia-southeast1.firebasedatabase.app/'; // URL ของ Firebase Realtime Database
+const FIREBASE_AUTH_SECRET = ''; // ระบุ Database Secret หรือปล่อยว่างหากตั้งกฎแบบ Public
+
+// --- ตั้งค่า TELEGRAM ---
+const TELEGRAM_BOT_TOKEN = '7944082320:AAEu39fL6Ooxn9rzF1vpd93yqbhvSqd1i60'; // <--- ใส่ Bot Token ของคุณที่นี่
+const TELEGRAM_CHAT_ID = '-4790474338';   // <--- ใส่ Chat ID ของกลุ่มหรือบุคคลที่นี่
+
+
+function onOpen() {
+    try {
+        initialSetup();
+    } catch (e) {
+        Logger.log("initialSetup failed on open: " + e.toString());
+    }
+    
+    try {
+        const ui = SpreadsheetApp.getUi();
+        ui.createMenu('Firebase Sync')
+          .addItem('เปิดแผงควบคุม Firebase (Open Sync Panel)', 'showFirebaseSyncPanel')
+          .addSeparator()
+          .addItem('อัพโหลดข้อมูลไปยัง Firebase (Upload to Firebase)', 'uploadDataToFirebase')
+          .addItem('ดาวน์โหลดข้อมูลจาก Firebase (Download from Firebase)', 'downloadDataFromFirebase')
+          .addToUi();
+    } catch (e) {
+        Logger.log("Firebase Sync menu creation failed: " + e.toString());
+    }
+}
+
+
+function initialSetup() {
+    setupSheet(JOB_DATA_SHEET_NAME, getJobHeaders());
+    setupSheet(USER_DATA_SHEET_NAME, getUserHeaders());
+    setupSheet(DROPDOWN_SHEET_NAME, getDropdownHeaders());
+    setupSheet(CUSTOMER_DATA_SHEET_NAME, getCustomerHeaders());
+}
+
+
+function doGet(e) {
+    if (e.postData && e.postData.contents) {
+        const postParams = JSON.parse(e.postData.contents);
+        e.parameter = { ...e.parameter, ...postParams };
+         return handleRequest(e);
+    }
+    return HtmlService.createHtmlOutput("Google Apps Script is running.");
+}
+
+
+function doPost(e) {
+    const params = JSON.parse(e.postData.contents);
+    e.parameter = params;
+    return handleRequest(e);
+}
+
+
+function handleRequest(e) {
+    try {
+        const action = e.parameter.action;
+
+        switch (action) {
+            case 'login': return loginUser(e.parameter.email, e.parameter.password);
+            case 'signup': return signupUser(e.parameter);
+            case 'forgotPassword': return forgotPassword(e.parameter.email);
+            case 'getUserData': return getUserData(e.parameter.email);
+            case 'updateProfile': return updateUserProfile(e.parameter);
+            case 'updateUserSignature': return updateUserSignature(e.parameter);
+            case 'createNewJob': return processNewJob(e.parameter);
+            case 'getAllJobs':
+                const userEmailForJobs = e.parameter.userEmail;
+                if (!userEmailForJobs) throw new Error("ต้องระบุ userEmail เพื่อดึงข้อมูลใบงาน");
+                const usersMap = readFromFirebase("users") || {};
+                const encodedEmail = encodeEmail(userEmailForJobs);
+                const user = usersMap[encodedEmail];
+                if (user) {
+                    const role = user.Role;
+                    const department = user.Department;
+                    return getAllJobs(role, department);
+                }
+                return getAllJobs("UNKNOWN_USER");
+            case 'getJobDetails': return getJobDetails(e.parameter);
+            case 'processApproval': return processApproval(e.parameter);
+            case 'acceptJob': return acceptJob(e.parameter);
+            case 'declineJob': return declineJob(e.parameter);
+            case 'closeJob': return closeJob(e.parameter);
+            case 'updateJobStatus': return updateJobStatus(e.parameter);
+            case 'getDropdownData': return getDropdownData();
+            case 'addDropdownItem': return addDropdownItem(e.parameter.type, e.parameter.value);
+            case 'updateDropdownItem': return updateDropdownItem(e.parameter.type, e.parameter.oldValue, e.parameter.newValue);
+            case 'deleteDropdownItem': return deleteDropdownItem(e.parameter.type, e.parameter.value);
+            case 'getAllUsers': return getAllUsers();
+            case 'updateUserRole': return updateUserRole(e.parameter);
+            case 'updateUserDepartment': return updateUserDepartment(e.parameter);
+            case 'deleteUser': return deleteUser(e.parameter);
+            case 'updateUserApprovalLevel': return updateUserApprovalLevel(e.parameter);
+            case 'updateUserCanAcceptJobs': return updateUserCanAcceptJobs(e.parameter);
+            // Customer Actions
+            case 'getAllCustomers': return getAllCustomers();
+            case 'addOrUpdateCustomer': return addOrUpdateCustomer(e.parameter);
+            case 'deleteCustomer': return deleteCustomer(e.parameter);
+
+            default: throw new Error("Action ที่ระบุไม่ถูกต้อง");
+        }
+    } catch (error) {
+        Logger.log(`Request Error: ${error.toString()}\nStack: ${error.stack}`);
+        return ContentService
+            .createTextOutput(JSON.stringify({ "status": "error", "message": error.message }))
+            .setMimeType(ContentService.MimeType.JSON);
+    }
+}
+
+// --- Firebase Core Utilities ---
+
+function getFirebaseUrl(path) {
+  let url = FIREBASE_DB_URL;
+  if (!url.endsWith('/')) {
+    url += '/';
+  }
+  url += path + '.json';
+  if (FIREBASE_AUTH_SECRET) {
+    url += '?auth=' + FIREBASE_AUTH_SECRET;
+  }
+  return url;
+}
+
+function encodeEmail(email) {
+  if (!email) return "";
+  return email.replace(/\./g, ',');
+}
+
+function decodeEmail(encodedEmail) {
+  if (!encodedEmail) return "";
+  return encodedEmail.replace(/,/g, '.');
+}
+
+function readFromFirebase(path) {
+  const url = getFirebaseUrl(path);
+  const res = UrlFetchApp.fetch(url, { method: "get", muteHttpExceptions: true });
+  if (res.getResponseCode() === 200) {
+    const text = res.getContentText();
+    return text ? JSON.parse(text) : null;
+  }
+  Logger.log("Firebase GET failed for path " + path + ": " + res.getContentText());
+  return null;
+}
+
+function writeToFirebase(path, data) {
+  const url = getFirebaseUrl(path);
+  const options = {
+    method: "put",
+    contentType: "application/json",
+    payload: JSON.stringify(data),
+    muteHttpExceptions: true
+  };
+  const res = UrlFetchApp.fetch(url, options);
+  if (res.getResponseCode() === 200) {
+    return true;
+  }
+  Logger.log("Firebase PUT failed for path " + path + ": " + res.getContentText());
+  return false;
+}
+
+function patchFirebase(path, data) {
+  const url = getFirebaseUrl(path);
+  const options = {
+    method: "patch",
+    contentType: "application/json",
+    payload: JSON.stringify(data),
+    muteHttpExceptions: true
+  };
+  const res = UrlFetchApp.fetch(url, options);
+  if (res.getResponseCode() === 200) {
+    return true;
+  }
+  Logger.log("Firebase PATCH failed for path " + path + ": " + res.getContentText());
+  return false;
+}
+
+// --- Authentication Functions ---
+
+function loginUser(email, password) {
+    if (!email || !password) throw new Error("ต้องระบุอีเมลและรหัสผ่าน");
+    const encodedEmail = encodeEmail(email);
+    const user = readFromFirebase("users/" + encodedEmail);
+    if (user) {
+        const storedHash = user.PasswordHash;
+        const inputHash = hashPassword(password);
+        if (storedHash === inputHash) {
+            return ContentService.createTextOutput(JSON.stringify({ status: "success", message: "เข้าสู่ระบบสำเร็จ" })).setMimeType(ContentService.MimeType.JSON);
+        }
+    }
+    return ContentService.createTextOutput(JSON.stringify({ status: "error", message: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" })).setMimeType(ContentService.MimeType.JSON);
+}
+
+function signupUser(params) {
+    const { fullName, email, phone, department, password } = params;
+    if (!fullName || !email || !phone || !department || !password) throw new Error("ต้องกรอกข้อมูลทุกช่องเพื่อสมัครสมาชิก");
+    
+    const encodedEmail = encodeEmail(email);
+    const existingUser = readFromFirebase("users/" + encodedEmail);
+    if (existingUser) {
+        throw new Error("อีเมลนี้ถูกลงทะเบียนแล้ว");
+    }
+    
+    addDropdownItem('department', department, true);
+    const hash = hashPassword(password);
+    
+    const rawUsers = readFromFirebase("users") || {};
+    const newUserId = `USER-${(Object.keys(rawUsers).length + 1).toString().padStart(3, '0')}`;
+    const newUser = {
+        UserID: newUserId,
+        FullName: fullName,
+        Email: email,
+        Phone: String(phone),
+        Department: department,
+        PasswordHash: hash,
+        SignatureURL: '',
+        Role: 'User',
+        ApprovalLevel: '',
+        CanAcceptJobs: 'FALSE'
+    };
+    writeToFirebase("users/" + encodedEmail, newUser);
+
+    return ContentService.createTextOutput(JSON.stringify({ status: "success", message: "สมัครสมาชิกสำเร็จ! กรุณาเข้าสู่ระบบ" })).setMimeType(ContentService.MimeType.JSON);
+}
+
+function forgotPassword(email) {
+    if (!email) throw new Error("ต้องระบุอีเมล");
+    const encodedEmail = encodeEmail(email);
+    const user = readFromFirebase("users/" + encodedEmail);
+    if (!user) throw new Error("ไม่พบอีเมลนี้ในระบบ");
+
+    const newPassword = Math.random().toString(36).slice(-8);
+    const hash = hashPassword(newPassword);
+    
+    patchFirebase("users/" + encodedEmail, { PasswordHash: hash });
+
+    MailApp.sendEmail(email, "รหัสผ่านใหม่สำหรับ WebApp ศูนย์รวมช่าง", `รหัสผ่านใหม่ของคุณคือ: ${newPassword}`);
+    return ContentService.createTextOutput(JSON.stringify({ status: "success", message: "รหัสผ่านใหม่ถูกส่งไปยังอีเมลของคุณแล้ว" })).setMimeType(ContentService.MimeType.JSON);
+}
+
+// --- Data Fetching Functions ---
+
+function getUserData(userEmail) {
+    if (!userEmail) throw new Error("ต้องระบุพารามิเตอร์อีเมล");
+    const encodedEmail = encodeEmail(userEmail);
+    const user = readFromFirebase("users/" + encodedEmail);
+    if (user) {
+        const userData = { ...user };
+        delete userData.PasswordHash;
+        return ContentService.createTextOutput(JSON.stringify({ status: "success", data: userData })).setMimeType(ContentService.MimeType.JSON);
+    }
+    throw new Error("ไม่พบผู้ใช้งาน");
+}
+
+function getDropdownData() {
+    const rawDropdownsMap = readFromFirebase("dropdowns") || {};
+    const rawDropdowns = Object.values(rawDropdownsMap);
+    const dropdowns = { jobTypes: [], customerTypes: [], departments: [] };
+    rawDropdowns.forEach(row => {
+        if (row.JobType) dropdowns.jobTypes.push(row.JobType);
+        if (row.CustomerType) dropdowns.customerTypes.push(row.CustomerType);
+        if (row.Department) dropdowns.departments.push(row.Department);
+    });
+    return ContentService.createTextOutput(JSON.stringify({ status: "success", data: dropdowns })).setMimeType(ContentService.MimeType.JSON);
+}
+
+// --- Dropdown CRUD Functions ---
+
+function addDropdownItem(type, value, silent = false) {
+    let rawDropdownsMap = readFromFirebase("dropdowns") || {};
+    const rawDropdowns = Object.values(rawDropdownsMap);
+    
+    const headerMap = {"jobType": "JobType", "customerType": "CustomerType", "department": "Department"};
+    const columnName = headerMap[type];
+    if (!columnName) throw new Error("ประเภท dropdown ไม่ถูกต้อง");
+
+    const columnValues = rawDropdowns.map(row => row[columnName]).filter(Boolean);
+    if (columnValues.includes(value)) {
+        if (silent) return; 
+        throw new Error("มีข้อมูลนี้อยู่แล้ว");
+    }
+    
+    // Find empty slot in Map or write a new node
+    const keys = Object.keys(rawDropdownsMap);
+    let addedKey = null;
+    for (let i = 0; i < keys.length; i++) {
+        const key = keys[i];
+        if (!rawDropdownsMap[key][columnName]) {
+            addedKey = key;
+            break;
+        }
+    }
+    
+    if (addedKey) {
+        rawDropdownsMap[addedKey][columnName] = value;
+        writeToFirebase("dropdowns/" + addedKey, rawDropdownsMap[addedKey]);
+    } else {
+        const newKey = "item_" + keys.length;
+        const newRow = {};
+        newRow[columnName] = value;
+        writeToFirebase("dropdowns/" + newKey, newRow);
+    }
+    
+    return ContentService.createTextOutput(JSON.stringify({ status: "success", message: "เพิ่มข้อมูลสำเร็จ" })).setMimeType(ContentService.MimeType.JSON);
+}
+
+function updateDropdownItem(type, oldValue, newValue) {
+    let rawDropdownsMap = readFromFirebase("dropdowns") || {};
+    const headerMap = {"jobType": "JobType", "customerType": "CustomerType", "department": "Department"};
+    const columnName = headerMap[type];
+    if (!columnName) throw new Error("ประเภท dropdown ไม่ถูกต้อง");
+    
+    let updated = false;
+    for (const key in rawDropdownsMap) {
+        if (rawDropdownsMap[key][columnName] === oldValue) {
+            rawDropdownsMap[key][columnName] = newValue;
+            writeToFirebase("dropdowns/" + key, rawDropdownsMap[key]);
+            updated = true;
+        }
+    }
+    
+    if (updated) {
+        return ContentService.createTextOutput(JSON.stringify({ status: "success", message: "อัปเดตข้อมูลสำเร็จ" })).setMimeType(ContentService.MimeType.JSON);
+    }
+    throw new Error("ไม่พบข้อมูล");
+}
+
+function deleteDropdownItem(type, value) {
+    let rawDropdownsMap = readFromFirebase("dropdowns") || {};
+    const headerMap = {"jobType": "JobType", "customerType": "CustomerType", "department": "Department"};
+    const columnName = headerMap[type];
+    if (!columnName) throw new Error("ประเภท dropdown ไม่ถูกต้อง");
+    
+    let updated = false;
+    for (const key in rawDropdownsMap) {
+        if (rawDropdownsMap[key][columnName] === value) {
+            delete rawDropdownsMap[key][columnName];
+            if (Object.keys(rawDropdownsMap[key]).length === 0) {
+              UrlFetchApp.fetch(getFirebaseUrl("dropdowns/" + key), { method: "delete" });
+            } else {
+              writeToFirebase("dropdowns/" + key, rawDropdownsMap[key]);
+            }
+            updated = true;
+        }
+    }
+    
+    if (updated) {
+        return ContentService.createTextOutput(JSON.stringify({ status: "success", message: "ลบข้อมูลสำเร็จ" })).setMimeType(ContentService.MimeType.JSON);
+    }
+    throw new Error("ไม่พบข้อมูล");
+}
+
+// --- User Permission Functions ---
+
+function getAllUsers() {
+    const usersMap = readFromFirebase("users") || {};
+    const users = Object.values(usersMap);
+    const sanitizedUsers = users.map(u => {
+        const copy = { ...u };
+        delete copy.PasswordHash;
+        return copy;
+    });
+    return ContentService.createTextOutput(JSON.stringify({ status: "success", data: sanitizedUsers })).setMimeType(ContentService.MimeType.JSON);
+}
+
+function updateUserRole(params) {
+    const { email, newRole, userEmail } = params;
+    if (email === userEmail) throw new Error("คุณไม่สามารถเปลี่ยนสิทธิ์ของตัวเองได้");
+    const encodedEmail = encodeEmail(email);
+    const user = readFromFirebase("users/" + encodedEmail);
+    if (!user) throw new Error("ไม่พบผู้ใช้งาน");
+    
+    patchFirebase("users/" + encodedEmail, { Role: newRole });
+    return ContentService.createTextOutput(JSON.stringify({ status: "success", message: "อัปเดตสิทธิ์ผู้ใช้สำเร็จ" })).setMimeType(ContentService.MimeType.JSON);
+}
+
+function updateUserDepartment(params) {
+    const { email, newDepartment, userEmail } = params;
+    const adminData = JSON.parse(getUserData(userEmail).getContent()).data;
+    if (adminData.Role !== 'Admin') throw new Error("เฉพาะ Admin เท่านั้นที่สามารถเปลี่ยนแผนก/หน่วยงานได้");
+    
+    const encodedEmail = encodeEmail(email);
+    const user = readFromFirebase("users/" + encodedEmail);
+    if (!user) throw new Error("ไม่พบผู้ใช้งาน");
+    
+    patchFirebase("users/" + encodedEmail, { Department: newDepartment });
+    return ContentService.createTextOutput(JSON.stringify({ status: "success", message: "อัปเดตแผนก/หน่วยงานสำเร็จ" })).setMimeType(ContentService.MimeType.JSON);
+}
+
+function deleteUser(params) {
+    const { emailToDelete, userEmail } = params;
+    if (emailToDelete === userEmail) throw new Error("คุณไม่สามารถลบบัญชีของตัวเองได้");
+    const adminData = JSON.parse(getUserData(userEmail).getContent()).data;
+    if (adminData.Role !== 'Admin') throw new Error("เฉพาะ Admin เท่านั้นที่สามารถลบผู้ใช้ได้");
+
+    const encodedEmail = encodeEmail(emailToDelete);
+    const userData = readFromFirebase("users/" + encodedEmail);
+    if (userData && userData.SignatureURL) {
+        deleteFileByUrl(userData.SignatureURL);
+    }
+
+    UrlFetchApp.fetch(getFirebaseUrl("users/" + encodedEmail), { method: "delete" });
+    return ContentService.createTextOutput(JSON.stringify({ status: "success", message: "ลบผู้ใช้สำเร็จ" })).setMimeType(ContentService.MimeType.JSON);
+}
+
+function updateUserApprovalLevel(params) {
+    const { email, newLevel, userEmail } = params;
+    const adminData = JSON.parse(getUserData(userEmail).getContent()).data;
+    if (!['Admin', 'Manager'].includes(adminData.Role)) throw new Error("คุณไม่มีสิทธิ์เปลี่ยนระดับการอนุมัติ");
+    
+    const encodedEmail = encodeEmail(email);
+    patchFirebase("users/" + encodedEmail, { ApprovalLevel: newLevel });
+    return ContentService.createTextOutput(JSON.stringify({ status: "success", message: "อัปเดตระดับการอนุมัติสำเร็จ" })).setMimeType(ContentService.MimeType.JSON);
+}
+
+function updateUserCanAcceptJobs(params) {
+    const { email, canAccept, userEmail } = params;
+    const adminData = JSON.parse(getUserData(userEmail).getContent()).data;
+    if (!['Admin', 'Manager'].includes(adminData.Role)) throw new Error("คุณไม่มีสิทธิ์เปลี่ยนสถานะการรับงาน");
+
+    const encodedEmail = encodeEmail(email);
+    patchFirebase("users/" + encodedEmail, { CanAcceptJobs: canAccept ? "TRUE" : "FALSE" });
+    return ContentService.createTextOutput(JSON.stringify({ status: "success", message: "อัปเดตสถานะการรับงานสำเร็จ" })).setMimeType(ContentService.MimeType.JSON);
+}
+
+// --- Job Data Functions ---
+
+function getAllJobs(role, department) {
+    const allJobsMap = readFromFirebase("jobs") || {};
+    const allJobs = Object.values(allJobsMap);
+    let jobsData = (role === 'User' && department) ? allJobs.filter(row => row && row["หน่วยงาน"] === department) : allJobs;
+    if (role === 'UNKNOWN_USER') jobsData = [];
+    jobsData = jobsData.filter(Boolean);
+    return ContentService.createTextOutput(JSON.stringify({ status: "success", data: jobsData })).setMimeType(ContentService.MimeType.JSON);
+}
+
+function getJobDetails(params) {
+    const { jobId } = params;
+    if (!jobId) throw new Error("ต้องระบุ Job ID");
+
+    const jobDetails = readFromFirebase("jobs/" + jobId);
+    if (!jobDetails) throw new Error("ไม่พบใบงาน");
+
+    const usersMap = readFromFirebase("users") || {};
+    const users = Object.values(usersMap);
+    const userMap = users.reduce((map, u) => {
+        if (u && u.Email) map[u.Email] = { name: u.FullName, signature: u.SignatureURL };
+        return map;
+    }, {});
+
+    const approverL1 = userMap[jobDetails["ผู้อนุมัติ Level 1"]] || {};
+    jobDetails.SignatureL1 = approverL1.signature || '';
+    jobDetails.ApproverL1Name = approverL1.name || '...................................';
+    
+    const approverL2 = userMap[jobDetails["ผู้อนุมัติ Level 2"]] || {};
+    jobDetails.SignatureL2 = approverL2.signature || '';
+    jobDetails.ApproverL2Name = approverL2.name || '...................................';
+
+    const actualReceiver = userMap[jobDetails["ผู้รับงานจริง"]] || {};
+    jobDetails.ActualReceiverName = actualReceiver.name || jobDetails['ผู้รับผิดชอบ'] || '...................................';
+    jobDetails.ActualReceiverSignature = actualReceiver.signature || '';
+
+    return ContentService.createTextOutput(JSON.stringify({ status: "success", data: jobDetails })).setMimeType(ContentService.MimeType.JSON);
+}
+
+function processApproval(params) {
+    const { jobId, isApproved, reason, approverEmail, assignedTo } = params;
+    const jobData = readFromFirebase("jobs/" + jobId);
+    if (!jobData) throw new Error("ไม่พบใบงาน");
+    const currentStatus = jobData["สถานะ"];
+    const updateData = {};
+
+    if (currentStatus === "รออนุมัติ Level 1") {
+        updateData["ผู้อนุมัติ Level 1"] = approverEmail;
+        updateData["เหตุผล L1"] = reason;
+        updateData["วันที่ L1"] = new Date().toISOString();
+        if (isApproved) {
+            updateData["ผู้รับผิดชอบ"] = assignedTo.join(',');
+            updateData["สถานะ"] = "รออนุมัติ Level 2";
+        } else {
+            updateData["สถานะ"] = "ไม่อนุมัติ L1";
+        }
+    } else if (currentStatus === "รออนุมัติ Level 2") {
+        updateData["ผู้อนุมัติ Level 2"] = approverEmail;
+        updateData["เหตุผล L2"] = reason;
+        updateData["วันที่ L2"] = new Date().toISOString();
+        updateData["สถานะ"] = isApproved ? "รอรับงาน" : "ไม่อนุมัติ L2";
+    } else throw new Error("ใบงานนี้ไม่อยู่ในสถานะที่จะอนุมัติได้");
+    
+    patchFirebase("jobs/" + jobId, updateData);
+    return ContentService.createTextOutput(JSON.stringify({ status: "success", message: "ดำเนินการอนุมัติสำเร็จ" })).setMimeType(ContentService.MimeType.JSON);
+}
+
+function acceptJob(params) {
+    const { jobId, technicianEmail } = params;
+    const updateData = {
+        "สถานะ": "กำลังดำเนินการ",
+        "ผู้รับงานจริง": technicianEmail,
+        "วันที่รับงาน": new Date().toISOString()
+    };
+    patchFirebase("jobs/" + jobId, updateData);
+    return ContentService.createTextOutput(JSON.stringify({ status: "success", message: "รับงานสำเร็จ" })).setMimeType(ContentService.MimeType.JSON);
+}
+
+function declineJob(params) {
+    const { jobId, technicianEmail, reason } = params;
+    const jobData = readFromFirebase("jobs/" + jobId);
+    if (!jobData) throw new Error("ไม่พบใบงาน");
+    
+    const assignedCol = jobData["ผู้รับผิดชอบ"] || '';
+    const assignedTechnicians = assignedCol.split(',');
+    
+    let declinedList = jobData["ผู้ปฏิเสธงาน (JSON)"] ? JSON.parse(jobData["ผู้ปฏิเสธงาน (JSON)"]) : [];
+    if (!declinedList.some(d => d.email === technicianEmail)) {
+        declinedList.push({ email: technicianEmail, reason });
+    }
+    
+    const updateData = {
+        "ผู้ปฏิเสธงาน (JSON)": JSON.stringify(declinedList)
+    };
+    
+    if (assignedTechnicians.every(tech => declinedList.some(d => d.email === tech))) {
+        updateData["สถานะ"] = "ถูกปฏิเสธโดยช่าง";
+    }
+    
+    patchFirebase("jobs/" + jobId, updateData);
+    return ContentService.createTextOutput(JSON.stringify({ status: "success", message: "ปฏิเสธงานสำเร็จ" })).setMimeType(ContentService.MimeType.JSON);
+}
+
+function closeJob(params) {
+    const { jobId, details } = params;
+    const jobData = readFromFirebase("jobs/" + jobId);
+    if (!jobData) throw new Error("ไม่พบใบงาน");
+    
+    const existingDetails = jobData["รายละเอียดการปฏิบัติงาน"] || '';
+    const timestamp = new Date().toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' });
+    const closingSummary = `สรุปการปิดงาน (${timestamp}): ${details}`;
+    const updatedDetails = existingDetails ? `${closingSummary}\n\n${existingDetails}` : closingSummary;
+
+    const updateData = {
+        "สถานะ": "ปิดงาน",
+        "รายละเอียดการปฏิบัติงาน": updatedDetails,
+        "วันที่ปิดงาน": new Date().toISOString()
+    };
+    
+    patchFirebase("jobs/" + jobId, updateData);
+    return ContentService.createTextOutput(JSON.stringify({ status: "success", message: "ปิดงานสำเร็จ" })).setMimeType(ContentService.MimeType.JSON);
+}
+
+function updateJobStatus(params) {
+    const { jobId, details } = params;
+    if (!jobId || !details) throw new Error("ต้องระบุ Job ID และรายละเอียด");
+
+    const jobData = readFromFirebase("jobs/" + jobId);
+    if (!jobData) throw new Error("ไม่พบใบงาน");
+
+    const existingDetails = jobData["รายละเอียดการปฏิบัติงาน"] || '';
+    const timestamp = new Date().toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' });
+    const newUpdate = `${timestamp}: ${details}`;
+    const updatedDetails = existingDetails ? `${newUpdate}\n\n${existingDetails}` : newUpdate;
+
+    patchFirebase("jobs/" + jobId, { "รายละเอียดการปฏิบัติงาน": updatedDetails });
+    return ContentService.createTextOutput(JSON.stringify({ status: "success", message: "อัปเดตรายละเอียดงานสำเร็จ" })).setMimeType(ContentService.MimeType.JSON);
+}
+
+// --- Customer Data Functions ---
+
+function getAllCustomers() {
+    const customersMap = readFromFirebase("customers") || {};
+    const customers = Object.values(customersMap);
+    return ContentService.createTextOutput(JSON.stringify({ status: "success", data: customers })).setMimeType(ContentService.MimeType.JSON);
+}
+
+function addOrUpdateCustomer(params) {
+    const formatAsText = (value) => {
+        const strValue = String(value || '');
+        if (strValue.startsWith("'")) return strValue;
+        return `'${strValue}`;
+    };
+
+    const customerData = {
+        CustomerID: params.CustomerID,
+        BillingName: params.BillingName || params.billingName,
+        BillingPhone: formatAsText(params.BillingPhone || params.billingPhone),
+        BillingAddress: params.BillingAddress || params.billingAddress,
+        ServiceName: params.ServiceName || params.serviceName,
+        ServicePhone: formatAsText(params.ServicePhone || params.servicePhone),
+        ServiceAddress: params.ServiceAddress || params.serviceAddress,
+        CustomerType: params.CustomerType || params.customerType,
+        ServiceStartDate: params.ServiceStartDate || params.serviceStartDate,
+        ContractPeriod: params.ContractPeriod || params.contractPeriod,
+        ServiceEndDate: params.ServiceEndDate || params.serviceEndDate,
+        ServiceFrequency: params.ServiceFrequency || params.serviceFrequency,
+        BillToDepartment: params.BillToDepartment || params.billToDepartment
+    };
+    
+    if (customerData.CustomerID) {
+        patchFirebase("customers/" + customerData.CustomerID, customerData);
+        return ContentService.createTextOutput(JSON.stringify({ status: "success", message: "อัปเดตข้อมูลลูกค้าสำเร็จ" })).setMimeType(ContentService.MimeType.JSON);
+    } else {
+        const rawCustomers = readFromFirebase("customers") || {};
+        const newId = `CUST-${(Object.keys(rawCustomers).length + 1).toString().padStart(4, '0')}`;
+        customerData.CustomerID = newId;
+        writeToFirebase("customers/" + newId, customerData);
+        return ContentService.createTextOutput(JSON.stringify({ status: "success", message: "เพิ่มข้อมูลลูกค้าใหม่สำเร็จ" })).setMimeType(ContentService.MimeType.JSON);
+    }
+}
+
+function deleteCustomer(params) {
+    const { CustomerID } = params;
+    if (!CustomerID) throw new Error("ต้องระบุ Customer ID");
+    
+    UrlFetchApp.fetch(getFirebaseUrl("customers/" + CustomerID), { method: "delete" });
+    return ContentService.createTextOutput(JSON.stringify({ status: "success", message: "ลบข้อมูลลูกค้าสำเร็จ" })).setMimeType(ContentService.MimeType.JSON);
+}
+
+// --- Telegram Notification Function ---
+
+function sendTelegramNotification(message) {
+  if (TELEGRAM_BOT_TOKEN === 'YOUR_TELEGRAM_BOT_TOKEN' || TELEGRAM_CHAT_ID === 'YOUR_TELEGRAM_CHAT_ID') {
+    Logger.log("Telegram Bot Token or Chat ID is not configured. Skipping notification.");
+    return;
+  }
+
+  const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+  const payload = {
+    method: 'post',
+    contentType: 'application/json',
+    payload: JSON.stringify({
+      chat_id: TELEGRAM_CHAT_ID,
+      text: message,
+      parse_mode: 'Markdown'
+    })
+  };
+
+  try {
+    const response = UrlFetchApp.fetch(url, payload);
+    Logger.log('Telegram response: ' + response.getContentText());
+  } catch (e) {
+    Logger.log(`Could not send Telegram message: ${e.toString()}`);
+  }
+}
+
+function testTelegramNotification() {
+  const testMessage = `
+🔔 *ข้อความทดสอบ* 🔔
+
+นี่คือการแจ้งเตือนทดสอบจากระบบ WebApp ศูนย์รวมช่าง
+หากคุณได้รับข้อความนี้ แสดงว่าการตั้งค่า Telegram ของคุณถูกต้อง!
+  `;
+  sendTelegramNotification(testMessage);
+  Logger.log("Sent a test notification to Telegram.");
+}
+
+// --- Helper Functions ---
+
+function deleteFileByUrl(url) {
+    if (!url) return;
+    try {
+        let fileId = '';
+        if (url.indexOf('lh3.googleusercontent.com/d/') !== -1) {
+            fileId = url.split('lh3.googleusercontent.com/d/')[1].split('/')[0].split('?')[0];
+        } else if (url.indexOf('id=') !== -1) {
+            fileId = url.split('id=')[1].split('&')[0];
+        } else if (url.indexOf('/file/d/') !== -1) {
+            fileId = url.split('/file/d/')[1].split('/')[0];
+        }
+        
+        if (fileId) {
+            const file = DriveApp.getFileById(fileId);
+            file.setTrashed(true);
+            Logger.log(`Trashed file: ${fileId}`);
+        }
+    } catch (e) {
+        Logger.log(`Failed to delete file from URL ${url}: ${e.toString()}`);
+    }
+}
+
+function hashPassword(password) {
+    const hash = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, password, Utilities.Charset.UTF_8);
+    return hash.map(byte => (byte & 0xFF).toString(16).padStart(2, '0')).join('');
+}
+
+function uploadFileToFolder(fileData, folder) {
+    try {
+        const decodedFile = Utilities.base64Decode(fileData.data);
+        const fileBlob = Utilities.newBlob(decodedFile, fileData.mimeType, fileData.fileName);
+        const file = folder.createFile(fileBlob);
+        return `https://lh3.googleusercontent.com/d/${file.getId()}`;
+    } catch (e) {
+        Logger.log(`File upload failed: ${e.toString()}`);
+        return '';
+    }
+}
+
+function uploadSignature(signatureDataString, folderId, baseFileName) {
+    if (!signatureDataString || !signatureDataString.startsWith('data:image/png;base64,')) return '';
+    try {
+        const signatureData = signatureDataString.split(",")[1];
+        const decodedSignature = Utilities.base64Decode(signatureData);
+        const signatureBlob = Utilities.newBlob(decodedSignature, 'image/png', `${baseFileName}.png`);
+        const file = DriveApp.getFolderById(folderId).createFile(signatureBlob);
+        return `https://lh3.googleusercontent.com/d/${file.getId()}`;
+    } catch (e) {
+        Logger.log(`Signature upload failed: ${e.toString()}`);
+        return '';
+    }
+}
+
+function createDocumentWithAttachments(spreadsheetName, jobID, params, signatureUrl, attachmentUrls) {
+    const docName = `ใบแจ้งงาน ${jobID}`;
+    const doc = DocumentApp.create(docName);
+    const body = doc.getBody();
+
+    body.appendParagraph(`ใบแจ้งงานบริการ - ${jobID}`).setHeading(DocumentApp.ParagraphHeading.HEADING1);
+
+    body.appendPageBreak();
+    body.appendParagraph("ไฟล์แนบ").setHeading(DocumentApp.ParagraphHeading.HEADING2);
+
+    attachmentUrls.forEach(url => {
+        try {
+            const imageBlob = UrlFetchApp.fetch(url).getBlob();
+            body.appendImage(imageBlob);
+        } catch(e) {
+            body.appendParagraph(`ไม่สามารถแสดงไฟล์: ${url}`);
+        }
+    });
+
+    doc.saveAndClose();
+    const docFile = DriveApp.getFileById(doc.getId());
+    DriveApp.getFolderById(ATTACHMENT_FOLDER_ID).addFile(docFile);
+    DriveApp.getRootFolder().removeFile(docFile);
+}
+
+function generateNewJobIDFirebase(allJobs, extraOffset = 0) {
+    const now = new Date();
+    const prefix = `TSC-JOB${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}-`;
+    
+    if (!allJobs || allJobs.length === 0) {
+        return prefix + (1 + extraOffset).toString().padStart(3, '0');
+    }
+    
+    const jobIDValues = allJobs.map(j => j.JobID).filter(Boolean);
+    const currentMonthSequences = jobIDValues
+        .filter(id => id && typeof id === 'string' && id.startsWith(prefix))
+        .map(id => parseInt(id.split('-')[2], 10))
+        .filter(num => !isNaN(num));
+
+    const lastSequence = currentMonthSequences.length > 0 ? Math.max(...currentMonthSequences) : 0;
+    const newSequence = lastSequence + 1 + extraOffset;
+    
+    return prefix + newSequence.toString().padStart(3, '0');
+}
+
+function generateNewJobID(sheet) {
+    const lock = LockService.getScriptLock();
+    lock.waitLock(30000); 
+    let newJobID = '';
+    try {
+        const now = new Date();
+        const prefix = `TSC-JOB${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}-`;
+        
+        const lastRow = sheet.getLastRow();
+        if (lastRow < 2) {
+            newJobID = prefix + '001';
+            return newJobID;
+        }
+        
+        const jobIDColumnValues = sheet.getRange(2, 3, lastRow - 1, 1).getValues().flat();
+        
+        const currentMonthSequences = jobIDColumnValues
+            .filter(id => id && typeof id === 'string' && id.startsWith(prefix))
+            .map(id => parseInt(id.split('-')[2], 10))
+            .filter(num => !isNaN(num));
+
+        const lastSequence = currentMonthSequences.length > 0 ? Math.max(...currentMonthSequences) : 0;
+        const newSequence = lastSequence + 1;
+        
+        newJobID = prefix + newSequence.toString().padStart(3, '0');
+
+    } finally {
+        lock.releaseLock();
+    }
+    return newJobID;
+}
+
+function generateNewJobIDNoLock(sheet, extraOffset = 0) {
+    let newJobID = '';
+    const now = new Date();
+    const prefix = `TSC-JOB${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}-`;
+    
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) {
+        newJobID = prefix + (1 + extraOffset).toString().padStart(3, '0');
+        return newJobID;
+    }
+    
+    const jobIDColumnValues = sheet.getRange(2, 3, lastRow - 1, 1).getValues().flat();
+    
+    const currentMonthSequences = jobIDColumnValues
+        .filter(id => id && typeof id === 'string' && id.startsWith(prefix))
+        .map(id => parseInt(id.split('-')[2], 10))
+        .filter(num => !isNaN(num));
+
+    const lastSequence = currentMonthSequences.length > 0 ? Math.max(...currentMonthSequences) : 0;
+    const newSequence = lastSequence + 1 + extraOffset;
+    
+    newJobID = prefix + newSequence.toString().padStart(3, '0');
+    return newJobID;
+}
+
+function setupSheet(sheetName, headers) {
+    const ss = SpreadsheetApp.openById(SHEET_ID);
+    let sheet = ss.getSheetByName(sheetName);
+    if (!sheet) sheet = ss.insertSheet(sheetName);
+    if (sheet.getLastRow() < 1 && headers && headers.length > 0) {
+        sheet.appendRow(headers);
+        sheet.setFrozenRows(1);
+        sheet.getRange(1, 1, 1, headers.length).setFontWeight("bold");
+        
+        if (sheetName === USER_DATA_SHEET_NAME) {
+            const hash = hashPassword("123456789");
+            sheet.appendRow(["USER-001", "เทียนชัย นาคหญี", "nakyeet@gmail.com", "'0972279469", "LTD", hash, "", "Admin", "Level1+Level2", "TRUE"]);
+        }
+         if (sheetName === DROPDOWN_SHEET_NAME) {
+            ss.getSheetByName(DROPDOWN_SHEET_NAME).appendRow(['', '', 'LTD']);
+        }
+    }
+    if (sheetName === JOB_DATA_SHEET_NAME) sheet.getRange('C:C').setNumberFormat('@');
+    if (sheetName === USER_DATA_SHEET_NAME) sheet.getRange('A:K').setNumberFormat('@');
+    if (sheetName === CUSTOMER_DATA_SHEET_NAME) sheet.getRange('A:M').setNumberFormat('@');
+    return sheet;
+}
+
+function getJobHeaders() {
+    return [
+        "Timestamp", "วันที่แจ้ง", "JobID", "ชื่อผู้แจ้ง", "เบอร์โทรผู้แจ้ง", "หน่วยงาน",
+        "ประเภทงาน", "ประเภทงาน (อื่นๆ)", "รายละเอียดการแจ้งงาน", "รายการเครื่องจักร (JSON)",
+        "วันที่ต้องเข้าพื้นที่", "เวลานัดหมาย", "ชื่อลูกค้า (สำหรับเปิดบิล)", "เบอร์โทรลูกค้า (สำหรับเปิดบิล)",
+        "ที่อยู่ลูกค้า (สำหรับเปิดบิล)", "ชื่อลูกค้า (สำหรับเข้าบริการ)", "เบอร์โทรลูกค้า (สำหรับเข้าบริการ)",
+        "ที่อยู่ลูกค้า (สำหรับเข้าบริการ)", "ประเภทลูกค้า", "ประเภทลูกค้า (อื่นๆ)", "วันที่เริ่มบริการ",
+        "ระยะเวลาสัญญา (เดือน)", "วันที่สิ้นสุดบริการ", "ความถี่การเข้าบริการ", "เรียกเก็บค่าใช้จ่ายกับแผนก",
+        "URL ลายเซ็น", "URL ไฟล์แนบ", "สถานะ",
+        "ผู้อนุมัติ Level 1", "เหตุผล L1", "วันที่ L1", "ผู้รับผิดชอบ",
+        "ผู้อนุมัติ Level 2", "เหตุผล L2", "วันที่ L2",
+        "ผู้รับงานจริง", "วันที่รับงาน", "ผู้ปฏิเสธงาน (JSON)", "รายละเอียดการปฏิบัติงาน", "วันที่ปิดงาน"
+    ];
+}
+
+// --- processNewJob function for gs.txt (direct Map implementation) ---
+
+function processNewJob(params) {
+    addOrUpdateCustomer(params);
+
+    const rawJobsMap = readFromFirebase("jobs") || {};
+    const allJobs = Object.values(rawJobsMap);
+    
+    let jobID = '';
+    let isUnique = false;
+    let offset = 0;
+    
+    while (!isUnique) {
+        jobID = generateNewJobIDFirebase(allJobs, offset);
+        if (!rawJobsMap[jobID]) {
+            isUnique = true;
+        } else {
+            offset++;
+        }
+    }
+
+    const newJob = {
+        "Timestamp": new Date().toISOString(), 
+        "วันที่แจ้ง": params.requestDate, 
+        "JobID": jobID,
+        "ชื่อผู้แจ้ง": params.requesterName, 
+        "เบอร์โทรผู้แจ้ง": String(params.requesterPhone), 
+        "หน่วยงาน": params.department,
+        "ประเภทงาน": params.jobType, 
+        "ประเภทงาน (อื่นๆ)": params.jobTypeOther || '', 
+        "รายละเอียดการแจ้งงาน": params.problemDescription,
+        "รายการเครื่องจักร (JSON)": params.machineList, 
+        "วันที่ต้องเข้าพื้นที่": params.serviceDate, 
+        "เวลานัดหมาย": params.serviceTime,
+        "ชื่อลูกค้า (สำหรับเปิดบิล)": params.billingName, 
+        "เบอร์โทรลูกค้า (สำหรับเปิดบิล)": String(params.billingPhone), 
+        "ที่อยู่ลูกค้า (สำหรับเปิดบิล)": params.billingAddress,
+        "ชื่อลูกค้า (สำหรับเข้าบริการ)": params.serviceName, 
+        "เบอร์โทรลูกค้า (สำหรับเข้าบริการ)": String(params.servicePhone), 
+        "ที่อยู่ลูกค้า (สำหรับเข้าบริการ)": params.serviceAddress,
+        "ประเภทลูกค้า": params.customerType, 
+        "ประเภทลูกค้า (อื่นๆ)": params.customerTypeOther || '', 
+        "วันที่เริ่มบริการ": params.serviceStartDate,
+        "ระยะเวลาสัญญา (เดือน)": params.contractPeriod, 
+        "วันที่สิ้นสุดบริการ": params.serviceEndDate, 
+        "ความถี่การเข้าบริการ": params.serviceFrequency,
+        "เรียกเก็บค่าใช้จ่ายกับแผนก": params.billToDepartment, 
+        "URL ลายเซ็น": "", 
+        "URL ไฟล์แนบ": "",
+        "สถานะ": "รออนุมัติ Level 1",
+        "ผู้อนุมัติ Level 1": "", "เหตุผล L1": "", "วันที่ L1": "", "ผู้รับผิดชอบ": "",
+        "ผู้อนุมัติ Level 2": "", "เหตุผล L2": "", "วันที่ L2": "",
+        "ผู้รับงานจริง": "", "วันที่รับงาน": "", "ผู้ปฏิเสธงาน (JSON)": "", "รายละเอียดการปฏิบัติงาน": "", "วันที่ปิดงาน": ""
+    };
+
+    let attachmentUrls = [];
+    if (params.fileAttachments) {
+        try {
+            const files = JSON.parse(params.fileAttachments);
+            if (Array.isArray(files)) {
+                const jobFolder = DriveApp.getFolderById(ATTACHMENT_FOLDER_ID).createFolder(jobID);
+                files.forEach(fileData => {
+                    const url = uploadFileToFolder(fileData, jobFolder);
+                    if (url) attachmentUrls.push(url);
+                });
+            }
+        } catch (e) {
+            Logger.log(`Error processing attachments for ${jobID}: ${e.toString()}`);
+        }
+    }
+    
+    let signatureUrl = '';
+    if (params.signature && params.signature.startsWith('https://')) {
+        signatureUrl = params.signature;
+    } else if (params.signature) {
+        signatureUrl = uploadSignature(params.signature, SIGNATURE_FOLDER_ID, jobID);
+    }
+
+    if (attachmentUrls.length > 0) {
+        createDocumentWithAttachments(SpreadsheetApp.openById(SHEET_ID).getName(), jobID, params, signatureUrl, attachmentUrls);
+    }
+
+    newJob["URL ลายเซ็น"] = signatureUrl;
+    newJob["URL ไฟล์แนบ"] = attachmentUrls.join(', ');
+
+    writeToFirebase("jobs/" + jobID, newJob);
+
+    try {
+      let machineDetails = 'ไม่มี';
+      if (params.machineList) {
+        const machines = JSON.parse(params.machineList);
+        if (Array.isArray(machines) && machines.length > 0 && machines[0].model) {
+          machineDetails = machines.map(m => `• รุ่น: ${m.model || '-'}, S/N: ${m.serial || '-'}`).join('\n');
+        }
+      }
+
+      const message = 
+        "🔔 *มีการแจ้งงานใหม่!*\\n" +
+        "-----------------------------------\\n" +
+        "*JobID:* `" + jobID + "`\\n" +
+        "*แจ้งโดย:* " + params.requesterName + "\\n" +
+        "*เบอร์โทร:* " + params.requesterPhone.replace(/'/g, '') + "\\n" +
+        "*หน่วยงาน:* " + params.department + "\\n" +
+        "-----------------------------------\\n" +
+        "*ประเภทงาน:* " + (params.jobType === 'other' ? params.jobTypeOther : params.jobType) + "\\n" +
+        "*รายละเอียด:*\\n" +
+        params.problemDescription + "\\n" +
+        "-----------------------------------\\n" +
+        "*นัดหมาย:* " + params.serviceDate + " / " + params.serviceTime + " น.\\n" +
+        "*รายการเครื่องจักร:*\\n" +
+        machineDetails;
+      sendTelegramNotification(message);
+    } catch (tgError) {
+      Logger.log(`Telegram notification failed for JobID ${jobID}: ${tgError.toString()}`);
+    }
+
+    return ContentService.createTextOutput(JSON.stringify({ "status": "success", "message": "ส่งใบแจ้งงานสำเร็จ!", "jobID": jobID })).setMimeType(ContentService.MimeType.JSON);
+}
+
+function updateUserProfile(params) {
+    const encodedEmail = encodeEmail(params.email);
+    const updateData = {
+        FullName: params.fullName,
+        Phone: String(params.phone),
+        Department: params.userDepartment
+    };
+    
+    addDropdownItem('department', params.userDepartment, true);
+
+    if (params.newPassword) {
+       updateData.PasswordHash = hashPassword(params.newPassword);
+    }
+    
+    patchFirebase("users/" + encodedEmail, updateData);
+    return ContentService.createTextOutput(JSON.stringify({ "status": "success", "message": "บันทึกข้อมูลส่วนตัวสำเร็จ!" })).setMimeType(ContentService.MimeType.JSON);
+}
+
+function updateUserSignature(params) {
+    const encodedEmail = encodeEmail(params.email);
+    const userData = readFromFirebase("users/" + encodedEmail);
+    if (userData && userData.SignatureURL) {
+        deleteFileByUrl(userData.SignatureURL);
+    }
+
+    const signatureUrl = uploadSignature(params.newSignature, SIGNATURE_FOLDER_ID, `${params.email}_signature`);
+    if (!signatureUrl) throw new Error("อัปโหลดลายเซ็นใหม่ไม่สำเร็จ");
+    
+    patchFirebase("users/" + encodedEmail, { SignatureURL: signatureUrl });
+    return ContentService.createTextOutput(JSON.stringify({ status: "success", message: "บันทึกลายเซ็นใหม่สำเร็จ!", "newSignatureUrl": signatureUrl })).setMimeType(ContentService.MimeType.JSON);
+}
+
+function getUserHeaders() {
+    return ["UserID", "FullName", "Email", "Phone", "Department", "PasswordHash", "SignatureURL", "Role", "ApprovalLevel", "CanAcceptJobs"];
+}
+
+function getDropdownHeaders() {
+    return ["JobType", "CustomerType", "Department"];
+}
+
+function getCustomerHeaders() {
+    return [
+        "CustomerID", "BillingName", "BillingPhone", "BillingAddress",
+        "ServiceName", "ServicePhone", "ServiceAddress",
+        "CustomerType", "ServiceStartDate", "ContractPeriod",
+        "ServiceEndDate", "ServiceFrequency", "BillToDepartment"
+    ];
+}
+
+function cleanDuplicatePendingJobs() {
+  const ss = SpreadsheetApp.openById(SHEET_ID);
+  const sheet = ss.getSheetByName(JOB_DATA_SHEET_NAME);
+  if (!sheet) return "ไม่พบชีต DATA ใบงาน";
+  
+  const data = sheet.getDataRange().getValues();
+  const headers = data[0];
+  const jobIDCol = headers.indexOf("JobID");
+  const statusCol = headers.indexOf("สถานะ");
+  
+  if (jobIDCol === -1 || statusCol === -1) return "ไม่พบคอลัมน์ JobID หรือ สถานะ";
+
+  const jobsMap = {};
+  for (let i = 1; i < data.length; i++) {
+    const jobID = data[i][jobIDCol];
+    if (jobID) {
+      if (!jobsMap[jobID]) jobsMap[jobID] = [];
+      jobsMap[jobID].push({ rowIndex: i + 1, status: data[i][statusCol], timestamp: data[i][0] });
+    }
+  }
+
+  const rowsToDelete = [];
+  Object.keys(jobsMap).forEach(jobID => {
+    const group = jobsMap[jobID];
+    if (group.length > 1) {
+      const hasProcessed = group.some(item => item.status !== "รออนุมัติ Level 1");
+      if (hasProcessed) {
+        group.forEach(item => { if (item.status === "รออนุมัติ Level 1") rowsToDelete.push(item.rowIndex); });
+      } else {
+        group.slice(1).forEach(item => { rowsToDelete.push(item.rowIndex); });
+      }
+    }
+  });
+
+  rowsToDelete.sort((a, b) => b - a);
+  rowsToDelete.forEach(rowIndex => sheet.deleteRow(rowIndex));
+  return "เคลียร์ใบงานที่ซ้ำซ้อนสำเร็จแล้ว! ลบข้อมูลไปทั้งหมด " + rowsToDelete.length + " รายการ";
+}
+
+
+// --- Firebase Integration Functions ---
+
+function uploadDataToFirebase() {
+  const ui = SpreadsheetApp.getUi();
+  const response = ui.alert('ยืนยันการอัพโหลด', 'คุณต้องการอัพโหลดข้อมูลจาก Google Sheets ไปยัง Firebase ใช่หรือไม่? (ข้อมูลเดิมบน Firebase ทั้งหมดจะถูกเขียนทับ)', ui.ButtonSet.YES_NO);
+  if (response !== ui.Button.YES) return;
+
+  try {
+    const jobs = getSheetDataAsJson(JOB_DATA_SHEET_NAME);
+    const jobsMap = {};
+    jobs.forEach(j => { if (j.JobID) jobsMap[j.JobID] = j; });
+
+    const users = getSheetDataAsJson(USER_DATA_SHEET_NAME);
+    const usersMap = {};
+    users.forEach(u => { if (u.Email) usersMap[encodeEmail(u.Email)] = u; });
+
+    const customers = getSheetDataAsJson(CUSTOMER_DATA_SHEET_NAME);
+    const customersMap = {};
+    customers.forEach(c => { if (c.CustomerID) customersMap[c.CustomerID] = c; });
+
+    const dropdowns = getSheetDataAsJson(DROPDOWN_SHEET_NAME);
+    const dropdownsMap = {};
+    dropdowns.forEach((d, idx) => { dropdownsMap["item_" + idx] = d; });
+
+    const data = {
+      jobs: jobsMap,
+      users: usersMap,
+      dropdowns: dropdownsMap,
+      customers: customersMap
+    };
+    
+    const url = getFirebaseUrl('');
+    const options = {
+      method: "put",
+      contentType: "application/json",
+      payload: JSON.stringify(data),
+      muteHttpExceptions: true
+    };
+    
+    const res = UrlFetchApp.fetch(url, options);
+    if (res.getResponseCode() === 200) {
+      ui.alert('สำเร็จ', 'อัพโหลดข้อมูลไปยัง Firebase ในรูปแบบ JSON Map เรียบร้อยแล้ว!', ui.ButtonSet.OK);
+    } else {
+      throw new Error(res.getContentText());
+    }
+  } catch (error) {
+    ui.alert('เกิดข้อผิดพลาด', 'ไม่สามารถอัพโหลดข้อมูลได้: ' + error.message, ui.ButtonSet.OK);
+  }
+}
+
+function downloadDataFromFirebase() {
+  const ui = SpreadsheetApp.getUi();
+  const response = ui.alert('ยืนยันการดาวน์โหลด', 'คุณต้องการดาวน์โหลดข้อมูลจาก Firebase มาเขียนทับข้อมูลใน Google Sheets ใช่หรือไม่? (ข้อมูลปัจจุบันบน Google Sheets ทั้งหมดจะถูกเขียนทับ)', ui.ButtonSet.YES_NO);
+  if (response !== ui.Button.YES) return;
+
+  try {
+    const url = getFirebaseUrl('');
+    const res = UrlFetchApp.fetch(url, { method: "get", muteHttpExceptions: true });
+    if (res.getResponseCode() !== 200) {
+      throw new Error(res.getContentText());
+    }
+    
+    const data = JSON.parse(res.getContentText());
+    if (!data) {
+      ui.alert('ไม่พบข้อมูล', 'ไม่มีข้อมูลใดๆ ใน Firebase Database', ui.ButtonSet.OK);
+      return;
+    }
+    
+    if (data.jobs !== undefined) {
+      const jobsList = Object.values(data.jobs);
+      writeJsonToSheet(JOB_DATA_SHEET_NAME, getJobHeaders(), jobsList);
+    }
+    if (data.users !== undefined) {
+      const usersList = Object.values(data.users);
+      writeJsonToSheet(USER_DATA_SHEET_NAME, getUserHeaders(), usersList);
+    }
+    if (data.dropdowns !== undefined) {
+      const dropdownsList = Object.values(data.dropdowns);
+      writeJsonToSheet(DROPDOWN_SHEET_NAME, getDropdownHeaders(), dropdownsList);
+    }
+    if (data.customers !== undefined) {
+      const customersList = Object.values(data.customers);
+      writeJsonToSheet(CUSTOMER_DATA_SHEET_NAME, getCustomerHeaders(), customersList);
+    }
+    
+    ui.alert('สำเร็จ', 'ดาวน์โหลดข้อมูลจาก Firebase ลงสู่ Google Sheets เรียบร้อยแล้ว!', ui.ButtonSet.OK);
+  } catch (error) {
+    ui.alert('เกิดข้อผิดพลาด', 'ไม่สามารถดาวน์โหลดข้อมูลได้: ' + error.message, ui.ButtonSet.OK);
+  }
+}
+
+function getSheetDataAsJson(sheetName) {
+  const ss = SpreadsheetApp.openById(SHEET_ID);
+  const sheet = ss.getSheetByName(sheetName);
+  if (!sheet) return [];
+  
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return [];
+  
+  const data = sheet.getRange(1, 1, lastRow, sheet.getLastColumn()).getValues();
+  const headers = data.shift();
+  
+  return data.map(row => {
+    const obj = {};
+    headers.forEach((header, index) => {
+      if (header) {
+        let val = row[index];
+        if (val instanceof Date) {
+          obj[header] = val.toISOString();
+        } else {
+          obj[header] = val;
+        }
+      }
+    });
+    return obj;
+  });
+}
+
+function writeJsonToSheet(sheetName, headers, jsonArray) {
+  const ss = SpreadsheetApp.openById(SHEET_ID);
+  let sheet = ss.getSheetByName(sheetName);
+  if (!sheet) {
+    sheet = ss.insertSheet(sheetName);
+  }
+  
+  sheet.clear();
+  sheet.appendRow(headers);
+  sheet.setFrozenRows(1);
+  sheet.getRange(1, 1, 1, headers.length).setFontWeight("bold");
+  
+  if (!jsonArray || jsonArray.length === 0) return;
+  
+  const rows = jsonArray.map(obj => {
+    return headers.map(header => {
+      let val = obj[header];
+      if (val === undefined || val === null) return '';
+      
+      if (header.includes("เบอร์โทร") || header === "Phone" || header === "BillingPhone" || header === "ServicePhone") {
+        val = String(val);
+        if (!val.startsWith("'") && val !== "") {
+          val = "'" + val;
+        }
+      }
+      return val;
+    });
+  });
+  
+  sheet.getRange(2, 1, rows.length, headers.length).setValues(rows);
+  
+  if (sheetName === JOB_DATA_SHEET_NAME) sheet.getRange('C:C').setNumberFormat('@');
+  if (sheetName === USER_DATA_SHEET_NAME) sheet.getRange('A:K').setNumberFormat('@');
+  if (sheetName === CUSTOMER_DATA_SHEET_NAME) sheet.getRange('A:M').setNumberFormat('@');
+}
+
+function showFirebaseSyncPanel() {
+  const html = HtmlService.createHtmlOutput(
+    '<!DOCTYPE html>' +
+    '<html>' +
+    '<head>' +
+    '  <meta charset="UTF-8">' +
+    '  <meta name="viewport" content="width=device-width, initial-scale=1.0">' +
+    '  <script src="https://cdn.tailwindcss.com"></script>' +
+    '  <link rel="preconnect" href="https://fonts.googleapis.com">' +
+    '  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>' +
+    '  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">' +
+    '  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />' +
+    '  <style>' +
+    '    body { font-family: "Prompt", sans-serif; }' +
+    '  </style>' +
+    '</head>' +
+    '<body class="p-5 bg-slate-50 text-slate-800 flex flex-col h-screen justify-between">' +
+    '  <div>' +
+    '    <div class="text-center mb-6 pb-4 border-b border-slate-200">' +
+    '      <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-indigo-100 text-indigo-600 mb-2">' +
+    '        <i class="fa-solid fa-database text-xl"></i>' +
+    '      </div>' +
+    '      <h3 class="text-lg font-bold text-slate-800">Firebase Sync Panel</h3>' +
+    '      <p class="text-xs text-slate-500 mt-1">แผงควบคุมซิงค์ข้อมูลระหว่าง Google Sheet และ Firebase</p>' +
+    '    </div>' +
+    '    ' +
+    '    <div class="space-y-4">' +
+    '      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">' +
+    '        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">อัพโหลดไป Firebase</p>' +
+    '        <p class="text-xs text-slate-400 mb-3">ส่งข้อมูลในสเปรดชีตทั้งหมดไปบันทึกทับใน Firebase Realtime Database (ในรูปแบบ JSON Map)</p>' +
+    '        <button onclick="upload()" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-sm shadow-md transition-all duration-200 flex items-center justify-center gap-2 active:scale-95">' +
+    '          <i class="fa-solid fa-cloud-arrow-up"></i> อัพโหลดข้อมูล (Upload)' +
+    '        </button>' +
+    '      </div>' +
+    '      ' +
+    '      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">' +
+    '        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">ดาวน์โหลดจาก Firebase</p>' +
+    '        <p class="text-xs text-slate-400 mb-3">ดึงข้อมูล JSON จาก Firebase มารันเขียนทับข้อมูลใน Google Sheet ในปัจจุบันทั้งหมด</p>' +
+    '        <button onclick="download()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-sm shadow-md transition-all duration-200 flex items-center justify-center gap-2 active:scale-95">' +
+    '          <i class="fa-solid fa-cloud-arrow-down"></i> ดาวน์โหลดข้อมูล (Download)' +
+    '        </button>' +
+    '      </div>' +
+    '    </div>' +
+    '  </div>' +
+    '  ' +
+    '  <div class="text-center pt-4 border-t border-slate-200 text-[10px] text-slate-400">' +
+    '    <p>© TSC Work Notification System</p>' +
+    '  </div>' +
+    '  ' +
+    '  <script>' +
+    '    function upload() {' +
+    '      google.script.run' +
+    '        .withSuccessHandler(() => {})' +
+    '        .withFailureHandler((err) => alert("เกิดข้อผิดพลาด: " + err.message))' +
+    '        .uploadDataToFirebase();' +
+    '    }' +
+    '    function download() {' +
+    '      google.script.run' +
+    '        .withSuccessHandler(() => {})' +
+    '        .withFailureHandler((err) => alert("เกิดข้อผิดพลาด: " + err.message))' +
+    '        .downloadDataFromFirebase();' +
+    '    }' +
+    '  </script>' +
+    '</body>' +
+    '</html>'
+  )
+  .setTitle('Firebase Sync Control');
+  
+  SpreadsheetApp.getUi().showSidebar(html);
+}

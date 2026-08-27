@@ -8,7 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -16,7 +16,7 @@
 
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-slate-100">
+<body class="bg-slate-50">
 
     <!-- Corner Page Loader -->
     <div id="page-loader" class="hidden fixed top-5 right-5 z-[101] p-2 bg-white/80 backdrop-blur-sm rounded-full shadow-lg">
@@ -26,91 +26,91 @@
     <!-- Auth Container -->
     <div id="auth-container">
         <!-- Login View -->
-        <div id="login-view" class="min-h-screen bg-slate-100 flex items-center justify-center p-4">
-            <div class="w-full max-w-md bg-white p-8 rounded-2xl shadow-lg space-y-6">
+        <div id="login-view" class="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+            <div class="w-full max-w-md bg-white p-8 rounded-3xl shadow-xl border border-slate-200/60 space-y-6">
                 <div class="text-center">
-                    <img src="https://lh3.googleusercontent.com/d/1b_e-SYaUDdlZqzyAwanUcYhaTx9inclg" alt="Logo" class="mx-auto mb-4 w-40 rounded-lg">
-                    <h1 class="text-2xl font-bold text-slate-800">แจ้งงานศูนย์รวมช่าง</h1>
-                    <p class="text-slate-500">เข้าสู่ระบบเพื่อใช้งาน</p>
+                    <img src="https://lh3.googleusercontent.com/d/1b_e-SYaUDdlZqzyAwanUcYhaTx9inclg" alt="Logo" class="mx-auto mb-4 w-40 rounded-xl">
+                    <h1 class="text-2xl font-bold text-slate-800 tracking-tight">แจ้งงานศูนย์รวมช่าง</h1>
+                    <p class="text-slate-500 text-sm">เข้าสู่ระบบเพื่อใช้งาน</p>
                 </div>
-                <form id="login-form" class="space-y-6">
+                <form id="login-form" class="space-y-5">
                     <div>
-                        <label for="login-email" class="block text-sm font-medium text-slate-700 mb-1">อีเมล</label>
-                        <input type="email" id="login-email" name="email" required class="w-full p-3 border border-slate-300 rounded-lg shadow-sm focus:ring-sky-500 focus:border-sky-500 transition" placeholder="กรอกอีเมล">
+                        <label for="login-email" class="block text-sm font-semibold text-slate-700 mb-1.5">อีเมล</label>
+                        <input type="email" id="login-email" name="email" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all outline-none text-slate-800" placeholder="กรอกอีเมล">
                     </div>
                     <div>
-                        <label for="login-password" class="block text-sm font-medium text-slate-700 mb-1">รหัสผ่าน</label>
-                        <input type="password" id="login-password" name="password" required class="w-full p-3 border border-slate-300 rounded-lg shadow-sm focus:ring-sky-500 focus:border-sky-500 transition" placeholder="กรอกรหัสผ่าน">
+                        <label for="login-password" class="block text-sm font-semibold text-slate-700 mb-1.5">รหัสผ่าน</label>
+                        <input type="password" id="login-password" name="password" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all outline-none text-slate-800" placeholder="กรอกรหัสผ่าน">
                     </div>
-                    <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-transform transform hover:scale-105">เข้าสู่ระบบ</button>
+                    <button type="submit" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold shadow-lg shadow-indigo-500/20 hover:bg-indigo-700 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200">เข้าสู่ระบบ</button>
                 </form>
                 <div class="text-center text-sm">
-                    <button id="show-signup-btn" class="font-medium text-blue-600 hover:underline">สมัครสมาชิก</button>
+                    <button id="show-signup-btn" class="font-semibold text-indigo-600 hover:text-indigo-700 transition-colors">สมัครสมาชิก</button>
                     <span class="mx-2 text-slate-300">|</span>
-                    <button id="show-forgot-password-btn" class="font-medium text-blue-600 hover:underline">ลืมรหัสผ่าน?</button>
+                    <button id="show-forgot-password-btn" class="font-semibold text-indigo-600 hover:text-indigo-700 transition-colors">ลืมรหัสผ่าน?</button>
                 </div>
             </div>
         </div>
 
         <!-- Signup View -->
-        <div id="signup-view" class="min-h-screen bg-slate-100 flex items-center justify-center p-4 hidden">
-            <div class="w-full max-w-md bg-white p-8 rounded-2xl shadow-lg space-y-6">
+        <div id="signup-view" class="min-h-screen bg-slate-50 flex items-center justify-center p-4 hidden">
+            <div class="w-full max-w-md bg-white p-8 rounded-3xl shadow-xl border border-slate-200/60 space-y-6">
                  <div class="text-center">
-                    <img src="https://lh3.googleusercontent.com/d/1b_e-SYaUDdlZqzyAwanUcYhaTx9inclg" alt="Logo" class="mx-auto mb-4 w-40 rounded-lg">
-                    <h1 class="text-2xl font-bold text-slate-800">สมัครสมาชิก</h1>
-                    <p class="text-slate-500">กรอกข้อมูลเพื่อสร้างบัญชีใหม่</p>
+                    <img src="https://lh3.googleusercontent.com/d/1b_e-SYaUDdlZqzyAwanUcYhaTx9inclg" alt="Logo" class="mx-auto mb-4 w-40 rounded-xl">
+                    <h1 class="text-2xl font-bold text-slate-800 tracking-tight">สมัครสมาชิก</h1>
+                    <p class="text-slate-500 text-sm">กรอกข้อมูลเพื่อสร้างบัญชีใหม่</p>
                 </div>
                 <form id="signup-form" class="space-y-4">
                     <div>
-                        <label for="signup-fullname" class="block text-sm font-medium text-slate-700 mb-1">ชื่อ-สกุล</label>
-                        <input type="text" id="signup-fullname" name="fullName" required class="w-full p-2 border border-slate-300 rounded-lg shadow-sm">
+                        <label for="signup-fullname" class="block text-sm font-semibold text-slate-700 mb-1.5">ชื่อ-สกุล</label>
+                        <input type="text" id="signup-fullname" name="fullName" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all outline-none text-slate-800">
                     </div>
                     <div>
-                        <label for="signup-email" class="block text-sm font-medium text-slate-700 mb-1">อีเมล</label>
-                        <input type="email" id="signup-email" name="email" required class="w-full p-2 border border-slate-300 rounded-lg shadow-sm">
+                        <label for="signup-email" class="block text-sm font-semibold text-slate-700 mb-1.5">อีเมล</label>
+                        <input type="email" id="signup-email" name="email" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all outline-none text-slate-800">
                     </div>
                     <div>
-                        <label for="signup-phone" class="block text-sm font-medium text-slate-700 mb-1">เบอร์โทร</label>
-                        <input type="tel" id="signup-phone" name="phone" required class="w-full p-2 border border-slate-300 rounded-lg shadow-sm" pattern="[0-9]*" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                        <label for="signup-phone" class="block text-sm font-semibold text-slate-700 mb-1.5">เบอร์โทร</label>
+                        <input type="tel" id="signup-phone" name="phone" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all outline-none text-slate-800" pattern="[0-9]*" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
                     </div>
                     <div>
-                        <label for="signup-department" class="block text-sm font-medium text-slate-700 mb-1">แผนก/หน่วยงาน</label>
-                        <input type="text" id="signup-department" name="department" list="department-list-signup" required class="w-full p-2 border border-slate-300 rounded-lg shadow-sm" placeholder="เลือกหรือพิมพ์เพื่อเพิ่มใหม่">
+                        <label for="signup-department" class="block text-sm font-semibold text-slate-700 mb-1.5">แผนก/หน่วยงาน</label>
+                        <input type="text" id="signup-department" name="department" list="department-list-signup" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all outline-none text-slate-800" placeholder="เลือกหรือพิมพ์เพื่อเพิ่มใหม่">
                         <datalist id="department-list-signup"></datalist>
                     </div>
                     <div>
-                        <label for="signup-password" class="block text-sm font-medium text-slate-700 mb-1">รหัสผ่าน</label>
-                        <input type="password" id="signup-password" name="password" required class="w-full p-2 border border-slate-300 rounded-lg shadow-sm">
+                        <label for="signup-password" class="block text-sm font-semibold text-slate-700 mb-1.5">รหัสผ่าน</label>
+                        <input type="password" id="signup-password" name="password" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all outline-none text-slate-800">
                     </div>
                     <div>
-                        <label for="signup-confirm-password" class="block text-sm font-medium text-slate-700 mb-1">ยืนยันรหัสผ่าน</label>
-                        <input type="password" id="signup-confirm-password" name="confirmPassword" required class="w-full p-2 border border-slate-300 rounded-lg shadow-sm">
+                        <label for="signup-confirm-password" class="block text-sm font-semibold text-slate-700 mb-1.5">ยืนยันรหัสผ่าน</label>
+                        <input type="password" id="signup-confirm-password" name="confirmPassword" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all outline-none text-slate-800">
                     </div>
-                    <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition">สมัครสมาชิก</button>
+                    <button type="submit" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold shadow-lg shadow-indigo-500/20 hover:bg-indigo-700 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200">สมัครสมาชิก</button>
                 </form>
                  <div class="text-center text-sm">
-                    <p class="text-slate-600">มีบัญชีอยู่แล้ว? <button id="back-to-login-from-signup" class="font-medium text-blue-600 hover:underline">เข้าสู่ระบบ</button></p>
+                    <p class="text-slate-600">มีบัญชีอยู่แล้ว? <button id="back-to-login-from-signup" class="font-semibold text-indigo-600 hover:text-indigo-700 transition-colors">เข้าสู่ระบบ</button></p>
                 </div>
             </div>
         </div>
 
         <!-- Forgot Password View -->
-        <div id="forgot-password-view" class="min-h-screen bg-slate-100 flex items-center justify-center p-4 hidden">
-             <div class="w-full max-w-md bg-white p-8 rounded-2xl shadow-lg space-y-6">
+        <div id="forgot-password-view" class="min-h-screen bg-slate-50 flex items-center justify-center p-4 hidden">
+             <div class="w-full max-w-md bg-white p-8 rounded-3xl shadow-xl border border-slate-200/60 space-y-6">
                 <div class="text-center">
-                    <img src="https://lh3.googleusercontent.com/d/1b_e-SYaUDdlZqzyAwanUcYhaTx9inclg" alt="Logo" class="mx-auto mb-4 w-40 rounded-lg">
-                    <h1 class="text-2xl font-bold text-slate-800">ลืมรหัสผ่าน</h1>
-                    <p class="text-slate-500">กรอกอีเมลของคุณเพื่อรับรหัสผ่านใหม่</p>
+                    <img src="https://lh3.googleusercontent.com/d/1b_e-SYaUDdlZqzyAwanUcYhaTx9inclg" alt="Logo" class="mx-auto mb-4 w-40 rounded-xl">
+                    <h1 class="text-2xl font-bold text-slate-800 tracking-tight">ลืมรหัสผ่าน</h1>
+                    <p class="text-slate-500 text-sm">กรอกอีเมลของคุณเพื่อรับรหัสผ่านใหม่</p>
                 </div>
-                <form id="forgot-password-form" class="space-y-4">
+                <form id="forgot-password-form" class="space-y-5">
                     <div>
-                        <label for="forgot-email" class="block text-sm font-medium text-slate-700 mb-1">อีเมล</label>
-                        <input type="email" id="forgot-email" name="email" required class="w-full p-3 border border-slate-300 rounded-lg shadow-sm" placeholder="กรอกอีเมลที่ลงทะเบียนไว้">
+                        <label for="forgot-email" class="block text-sm font-semibold text-slate-700 mb-1.5">อีเมล</label>
+                        <input type="email" id="forgot-email" name="email" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all outline-none text-slate-800" placeholder="กรอกอีเมลที่ลงทะเบียนไว้">
                     </div>
-                    <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition">ส่งรหัสผ่านใหม่</button>
+                    <button type="submit" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold shadow-lg shadow-indigo-500/20 hover:bg-indigo-700 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200">ส่งรหัสผ่านใหม่</button>
                 </form>
                  <div class="text-center text-sm">
-                    <button id="back-to-login-from-forgot" class="font-medium text-blue-600 hover:underline">กลับไปหน้าเข้าสู่ระบบ</button>
+                    <button id="back-to-login-from-forgot" class="font-semibold text-indigo-600 hover:text-indigo-700 transition-colors">กลับไปหน้าเข้าสู่ระบบ</button>
                 </div>
             </div>
         </div>
@@ -120,9 +120,9 @@
     <div id="app-container" class="hidden">
         <div class="flex h-screen">
              <!-- Sidebar -->
-            <aside id="sidebar" class="sidebar-gradient text-white w-64 min-h-screen p-4 fixed lg:relative transition-transform duration-300 ease-in-out -translate-x-full lg:translate-x-0 z-50 flex flex-col">
+            <aside id="sidebar" class="sidebar-dark text-slate-300 w-64 min-h-screen p-6 fixed lg:relative transition-transform duration-300 ease-in-out -translate-x-full lg:translate-x-0 z-50 flex flex-col">
                 <div class="flex items-center justify-end mb-4 lg:hidden">
-                     <button id="close-sidebar-btn" class="p-1 rounded-full hover:bg-sky-700">
+                     <button id="close-sidebar-btn" class="p-1 rounded-full hover:bg-slate-800 transition-colors">
                         <i class="fa-solid fa-times"></i>
                     </button>
                 </div>
@@ -134,40 +134,47 @@
 
                 <nav class="flex-grow">
                     <ul class="space-y-2">
-                        <li><a href="#" data-view="dashboard-view" class="sidebar-item flex items-center gap-4 py-2.5 px-4 rounded-lg hover:bg-sky-700 transition-colors">
+                        <li><a href="#" data-view="dashboard-view" class="sidebar-item flex items-center gap-4 py-2.5 px-4 rounded-lg transition-colors">
                             <i class="fa-solid fa-chart-pie w-5 text-center"></i><span>Dashboard</span>
                         </a></li>
-                        <li><a href="#" data-view="new-job-view" class="sidebar-item flex items-center gap-4 py-2.5 px-4 rounded-lg hover:bg-sky-700 transition-colors">
+                        <li><a href="#" data-view="new-job-view" class="sidebar-item flex items-center gap-4 py-2.5 px-4 rounded-lg transition-colors">
                             <i class="fa-solid fa-plus w-5 text-center"></i><span>แจ้งงานใหม่</span>
                         </a></li>
-                         <li id="approve-job-menu-item" style="display: none;"><a href="#" data-view="approve-job-view" class="sidebar-item flex items-center gap-4 py-2.5 px-4 rounded-lg hover:bg-sky-700 transition-colors">
+                         <li id="approve-job-menu-item" style="display: none;"><a href="#" data-view="approve-job-view" class="sidebar-item flex items-center gap-4 py-2.5 px-4 rounded-lg transition-colors">
                             <i class="fa-solid fa-check-to-slot w-5 text-center"></i>
                             <div class="flex justify-between items-center w-full">
                                 <span>อนุมัติใบงาน</span>
                                 <span id="approval-badge" class="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full hidden"></span>
                             </div>
                         </a></li>
-                        <li id="receive-job-menu-item" style="display: none;"><a href="#" data-view="receive-job-view" class="sidebar-item flex items-center gap-4 py-2.5 px-4 rounded-lg hover:bg-sky-700 transition-colors">
-                           <i class="fa-solid fa-list-check w-5 text-center"></i><span>รับใบงาน</span>
+                        <li id="receive-job-menu-item" style="display: none;"><a href="#" data-view="receive-job-view" class="sidebar-item flex items-center gap-4 py-2.5 px-4 rounded-lg transition-colors">
+                           <i class="fa-solid fa-list-check w-5 text-center"></i>
+                           <div class="flex justify-between items-center w-full">
+                               <span>รับใบงาน</span>
+                               <div class="flex items-center gap-1">
+                                   <span id="receive-menu-badge-pending" title="ใบงานที่รอรับ" class="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full hidden"></span>
+                                   <span id="receive-menu-badge-close" title="ใบงานที่ต้องปิด" class="bg-amber-500 text-white text-xs font-bold px-2 py-0.5 rounded-full hidden"></span>
+                               </div>
+                           </div>
                         </a></li>
-                        <li><a href="#" data-view="download-docs-view" class="sidebar-item flex items-center gap-4 py-2.5 px-4 rounded-lg hover:bg-sky-700 transition-colors">
+                        <li><a href="#" data-view="download-docs-view" class="sidebar-item flex items-center gap-4 py-2.5 px-4 rounded-lg transition-colors">
                             <i class="fa-solid fa-download w-5 text-center"></i><span>ดาวน์โหลดเอกสาร</span>
                         </a></li>
-                        <li><a href="#" data-view="job-history-view" class="sidebar-item flex items-center gap-4 py-2.5 px-4 rounded-lg hover:bg-sky-700 transition-colors">
+                        <li><a href="#" data-view="job-history-view" class="sidebar-item flex items-center gap-4 py-2.5 px-4 rounded-lg transition-colors">
                             <i class="fa-solid fa-history w-5 text-center"></i><span>ประวัติการแจ้งงาน</span>
                         </a></li>
-                        <li><a href="#" data-view="settings-view" class="sidebar-item flex items-center gap-4 py-2.5 px-4 rounded-lg hover:bg-sky-700 transition-colors">
+                        <li><a href="#" data-view="settings-view" class="sidebar-item flex items-center gap-4 py-2.5 px-4 rounded-lg transition-colors">
                             <i class="fa-solid fa-gear w-5 text-center"></i><span>ตั้งค่า</span>
                         </a></li>
                     </ul>
                 </nav>
 
-                <div class="mt-auto pt-4 border-t border-sky-600 text-center">
+                <div class="mt-auto pt-4 border-t border-slate-800 text-center">
                     <div class="mb-4">
                         <p id="user-fullname" class="font-semibold"></p>
-                        <p id="user-role" class="text-sm text-sky-200"></p>
+                        <p id="user-role" class="text-sm text-slate-400"></p>
                     </div>
-                    <a href="#" id="logout-btn" class="sidebar-item flex items-center justify-center gap-3 py-3 px-4 rounded-lg hover:bg-sky-700 transition-colors">
+                    <a href="#" id="logout-btn" class="sidebar-item flex items-center justify-center gap-3 py-3 px-4 rounded-lg transition-colors">
                         <i class="fa-solid fa-right-from-bracket"></i><span>ออกจากระบบ</span>
                     </a>
                 </div>
@@ -186,30 +193,34 @@
                     <!-- Dashboard View -->
                     <div id="dashboard-view" class="view-content">
                         <!-- Stats Cards -->
-                        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-                            <div class="bg-yellow-100 p-4 rounded-lg shadow-sm text-center">
-                                <p class="text-sm text-yellow-800 font-semibold">รออนุมัติ</p>
-                                <p id="count-pending-review" class="text-3xl font-bold text-yellow-900 mt-1">0</p>
+                        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-8">
+                            <div class="bg-white p-5 rounded-xl border border-slate-100 border-l-4 border-l-sky-500 shadow-sm text-left">
+                                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">ใบงานทั้งหมด</p>
+                                <p id="count-all-jobs" class="text-3xl font-bold text-slate-900 mt-2">0</p>
                             </div>
-                            <div class="bg-sky-100 p-4 rounded-lg shadow-sm text-center">
-                                <p class="text-sm text-sky-800 font-semibold">รอรับงาน</p>
-                                <p id="count-pending-accept" class="text-3xl font-bold text-sky-900 mt-1">0</p>
+                            <div class="bg-white p-5 rounded-xl border border-slate-100 border-l-4 border-l-amber-500 shadow-sm text-left">
+                                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">รออนุมัติ</p>
+                                <p id="count-pending-review" class="text-3xl font-bold text-slate-900 mt-2">0</p>
                             </div>
-                            <div class="bg-blue-100 p-4 rounded-lg shadow-sm text-center">
-                                <p class="text-sm text-blue-800 font-semibold">รับงานแล้ว</p>
-                                <p id="count-in-progress" class="text-3xl font-bold text-blue-900 mt-1">0</p>
+                            <div class="bg-white p-5 rounded-xl border border-slate-100 border-l-4 border-l-indigo-500 shadow-sm text-left">
+                                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">รอรับงาน</p>
+                                <p id="count-pending-accept" class="text-3xl font-bold text-slate-900 mt-2">0</p>
                             </div>
-                            <div class="bg-emerald-100 p-4 rounded-lg shadow-sm text-center">
-                                <p class="text-sm text-emerald-800 font-semibold">ปิดงานแล้ว</p>
-                                <p id="count-closed" class="text-3xl font-bold text-emerald-900 mt-1">0</p>
+                            <div class="bg-white p-5 rounded-xl border border-slate-100 border-l-4 border-l-violet-500 shadow-sm text-left">
+                                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">รับงานแล้ว</p>
+                                <p id="count-in-progress" class="text-3xl font-bold text-slate-900 mt-2">0</p>
                             </div>
-                            <div class="bg-orange-100 p-4 rounded-lg shadow-sm text-center">
-                                <p class="text-sm text-orange-800 font-semibold">ไม่รับงาน</p>
-                                <p id="count-declined" class="text-3xl font-bold text-orange-900 mt-1">0</p>
+                            <div class="bg-white p-5 rounded-xl border border-slate-100 border-l-4 border-l-emerald-500 shadow-sm text-left">
+                                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">ปิดงานแล้ว</p>
+                                <p id="count-closed" class="text-3xl font-bold text-slate-900 mt-2">0</p>
                             </div>
-                            <div class="bg-rose-100 p-4 rounded-lg shadow-sm text-center">
-                                <p class="text-sm text-rose-800 font-semibold">ไม่อนุมัติ</p>
-                                <p id="count-rejected" class="text-3xl font-bold text-rose-900 mt-1">0</p>
+                            <div class="bg-white p-5 rounded-xl border border-slate-100 border-l-4 border-l-orange-500 shadow-sm text-left">
+                                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">ไม่รับงาน</p>
+                                <p id="count-declined" class="text-3xl font-bold text-slate-900 mt-2">0</p>
+                            </div>
+                            <div class="bg-white p-5 rounded-xl border border-slate-100 border-l-4 border-l-rose-500 shadow-sm text-left">
+                                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">ไม่อนุมัติ</p>
+                                <p id="count-rejected" class="text-3xl font-bold text-slate-900 mt-2">0</p>
                             </div>
                         </div>
 
@@ -254,6 +265,27 @@
                             </div>
                             <div id="activity-pagination" class="mt-4 flex justify-center items-center space-x-4">
                                 <!-- Pagination controls will be populated by JS -->
+                            </div>
+                        </div>
+
+                        <!-- Top 10 Customers Table -->
+                        <div class="form-section mt-8">
+                            <h2 class="form-section-title">10 อันดับ ลูกค้าที่แจ้งงานบ่อยสุด</h2>
+                            <div class="overflow-x-auto">
+                                <table id="top-customers-table" class="w-full text-sm">
+                                    <thead class="bg-slate-50 text-slate-600 uppercase text-xs">
+                                        <tr>
+                                            <th class="p-3 text-left w-16">อันดับ</th>
+                                            <th class="p-3 text-left">ชื่อลูกค้า (สำหรับเปิดบิล)</th>
+                                            <th class="p-3 text-left">เบอร์โทรศัพท์</th>
+                                            <th class="p-3 text-left">ที่อยู่</th>
+                                            <th class="p-3 text-right w-32">จำนวนงานทั้งหมด</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Data will be populated by JS -->
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
@@ -404,12 +436,12 @@
                             <!-- ไฟล์แนบ -->
                             <div class="form-section">
                                 <h2 class="form-section-title">ไฟล์แนบ (ถ้ามี)</h2>
-                                <label for="fileAttachment" class="inline-block mb-4 px-4 py-2 bg-sky-600 text-white font-semibold rounded-lg hover:bg-sky-700 transition text-sm cursor-pointer">
+                                <label for="fileAttachment" class="inline-block mb-4 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/20 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 text-sm cursor-pointer">
                                     <i class="fa-solid fa-paperclip mr-2"></i>เลือกไฟล์ (เพิ่มไฟล์ได้เรื่อยๆ)
                                 </label>
                                 <input type="file" id="fileAttachment" name="fileAttachment" accept="image/*,.pdf" multiple class="hidden"/>
-                                <div id="image-preview-container" class="bg-slate-100 p-4 rounded-lg">
-                                    <p id="image-preview-placeholder" class="text-slate-500 text-center">ตัวอย่างไฟล์รูปภาพ (4 รูปต่อ 1 หน้า A4) จะแสดงที่นี่</p>
+                                <div id="image-preview-container" class="bg-slate-50 border border-slate-200/60 p-4 rounded-2xl">
+                                    <p id="image-preview-placeholder" class="text-slate-500 text-center text-sm">ตัวอย่างไฟล์รูปภาพ (4 รูปต่อ 1 หน้า A4) จะแสดงที่นี่</p>
                                 </div>
                                 <div id="other-files-list" class="text-sm text-slate-600 mt-4 space-y-1"></div>
                             </div>
@@ -438,7 +470,7 @@
                             </div>
 
                             <div class="mt-8 flex justify-end">
-                                <button type="submit" class="px-8 py-3 bg-sky-600 text-white font-bold rounded-lg shadow-md hover:bg-sky-700 transition-transform transform hover:scale-105">ส่งใบแจ้งงาน</button>
+                                <button type="submit" class="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/20 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200">ส่งใบแจ้งงาน</button>
                             </div>
                         </form>
                     </div>
@@ -446,7 +478,7 @@
                     <!-- Approve Job View -->
                     <div id="approve-job-view" class="view-content hidden">
                         <div class="form-section">
-                            <h2 class="form-section-title">รายการใบงานรออนุมัติ</h2>
+                            <h2 class="form-section-title">รายการใบงานรออนุมัติ <span id="approval-jobs-count-badge" class="text-sm font-normal text-slate-500 ml-2"></span></h2>
                              <div class="mb-4">
                                 <label for="approval-jobs-search-input" class="sr-only">ค้นหาใบงาน</label>
                                 <input type="text" id="approval-jobs-search-input" placeholder="ค้นหาด้วยเลขที่, ชื่อลูกค้า, หรือผู้แจ้ง..." class="w-full p-2 border border-slate-300 rounded-md shadow-sm">
@@ -475,6 +507,9 @@
                                     <tbody></tbody>
                                 </table>
                             </div>
+                            <div id="approval-jobs-pagination" class="mt-4 flex justify-center items-center space-x-4">
+                                <!-- Pagination controls will be populated by JS -->
+                            </div>
                         </div>
                     </div>
 
@@ -498,18 +533,20 @@
                                 <div>
                                     <h3 class="text-lg font-semibold text-slate-700 mb-3 flex items-center">
                                         <i class="fa-solid fa-folder-open text-sky-600 mr-3"></i>
-                                        ใบงานที่รอรับ
+                                        ใบงานที่รอรับ <span id="receive-count-badge" class="text-sm font-normal text-slate-500 ml-2"></span>
                                     </h3>
                                     <div id="jobs-to-receive-list" class="bg-slate-50 p-4 rounded-lg min-h-[200px] space-y-3"></div>
+                                    <div id="receive-jobs-pagination" class="mt-4 flex justify-center items-center space-x-2"></div>
                                 </div>
                     
                                 <!-- Column 2: Jobs to Close -->
                                 <div>
                                     <h3 class="text-lg font-semibold text-slate-700 mb-3 flex items-center">
                                         <i class="fa-solid fa-check-double text-emerald-600 mr-3"></i>
-                                        ใบงานที่ต้องปิด
+                                        ใบงานที่ต้องปิด <span id="close-count-badge" class="text-sm font-normal text-slate-500 ml-2"></span>
                                     </h3>
                                     <div id="jobs-to-close-list" class="bg-slate-50 p-4 rounded-lg min-h-[200px] space-y-3"></div>
+                                    <div id="close-jobs-pagination" class="mt-4 flex justify-center items-center space-x-2"></div>
                                 </div>
                             </div>
                         </div>
@@ -543,6 +580,9 @@
                                     <tbody></tbody>
                                 </table>
                             </div>
+                            <div id="jobs-pagination" class="mt-4 flex justify-center items-center space-x-4">
+                                <!-- Pagination controls will be populated by JS -->
+                            </div>
                         </div>
                     </div>
 
@@ -554,6 +594,9 @@
                                 <input type="text" id="history-search-input" placeholder="ค้นหาด้วยชื่อลูกค้า..." class="w-full p-2 border border-slate-300 rounded-md shadow-sm">
                             </div>
                             <div id="job-history-container" class="space-y-4"></div>
+                            <div id="history-pagination" class="mt-4 flex justify-center items-center space-x-4">
+                                 <!-- Pagination controls will be populated by JS -->
+                             </div>
                         </div>
                     </div>
                     
@@ -581,18 +624,6 @@
                                     <div>
                                         <h3 class="font-semibold text-lg text-slate-800">ตั้งค่าสิทธิ์ผู้ใช้</h3>
                                         <p class="text-sm text-slate-500">จัดการบทบาทและสิทธิ์การเข้าถึง</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <!-- Card 3: Approver Settings -->
-                             <div id="approver-settings-card" data-view="approver-settings-view" class="settings-card bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer hidden">
-                                <div class="flex items-center gap-4">
-                                     <div class="bg-amber-100 p-3 rounded-full">
-                                        <i class="fa-solid fa-user-check text-amber-600 text-xl"></i>
-                                    </div>
-                                    <div>
-                                        <h3 class="font-semibold text-lg text-slate-800">ตั้งค่าสิทธิ์ผู้อนุมัติ</h3>
-                                        <p class="text-sm text-slate-500">กำหนดสายการอนุมัติใบงาน</p>
                                     </div>
                                 </div>
                             </div>
@@ -625,17 +656,17 @@
 
                     <!-- Customer Management View -->
                     <div id="customer-management-view" class="view-content hidden">
-                        <button class="back-to-settings-btn mb-6 text-sm font-medium text-sky-600 hover:underline"><i class="fa-solid fa-arrow-left mr-2"></i>กลับไปหน้าตั้งค่า</button>
+                        <button class="back-to-settings-btn mb-6 text-sm font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"><i class="fa-solid fa-arrow-left mr-2"></i>กลับไปหน้าตั้งค่า</button>
                         <div class="form-section">
                             <div class="flex justify-between items-center mb-4">
-                                <h2 class="form-section-title !mb-0 !border-0">ข้อมูลลูกค้าทั้งหมด</h2>
-                                <button id="add-customer-btn" class="px-4 py-2 bg-sky-600 text-white font-semibold rounded-lg shadow-sm hover:bg-sky-700 transition">
+                                <h2 class="form-section-title !mb-0 !border-0">ข้อมูลลูกค้าทั้งหมด <span id="customers-count-badge" class="text-sm font-normal text-slate-500 ml-2"></span></h2>
+                                <button id="add-customer-btn" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/20 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200">
                                     <i class="fa-solid fa-plus mr-2"></i>เพิ่มลูกค้าใหม่
                                 </button>
                             </div>
                              <div class="mb-4">
                                 <label for="customer-search-input" class="sr-only">ค้นหาลูกค้า</label>
-                                <input type="text" id="customer-search-input" placeholder="ค้นหาด้วยชื่อ, เบอร์โทร, หรือที่อยู่..." class="w-full p-2 border border-slate-300 rounded-md shadow-sm">
+                                <input type="text" id="customer-search-input" placeholder="ค้นหาด้วยชื่อ, เบอร์โทร, หรือที่อยู่..." class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all outline-none text-slate-800">
                             </div>
                             <div class="overflow-x-auto">
                                 <table id="customers-table" class="w-full text-sm text-left text-slate-500">
@@ -650,6 +681,9 @@
                                     <tbody></tbody>
                                 </table>
                             </div>
+                            <div id="customers-pagination" class="mt-4 flex justify-center items-center space-x-4">
+                                <!-- Pagination controls will be populated by JS -->
+                            </div>
                         </div>
                     </div>
 
@@ -657,7 +691,7 @@
                     <div id="user-permissions-view" class="view-content hidden">
                         <button class="back-to-settings-btn mb-6 text-sm font-medium text-sky-600 hover:underline"><i class="fa-solid fa-arrow-left mr-2"></i>กลับไปหน้าตั้งค่า</button>
                         <div class="form-section">
-                            <h2 class="form-section-title">จัดการสิทธิ์ผู้ใช้</h2>
+                            <h2 class="form-section-title">จัดการสิทธิ์ผู้ใช้ <span id="users-count-badge" class="text-sm font-normal text-slate-500 ml-2"></span></h2>
                              <div class="mb-4">
                                 <label for="user-search-input" class="sr-only">ค้นหาผู้ใช้</label>
                                 <input type="text" id="user-search-input" placeholder="ค้นหาด้วยชื่อ, อีเมล, หรือแผนก..." class="w-full p-2 border border-slate-300 rounded-md shadow-sm">
@@ -670,33 +704,9 @@
                                             <th scope="col" class="px-6 py-3">Email</th>
                                             <th scope="col" class="px-6 py-3">แผนก/หน่วยงาน</th>
                                             <th scope="col" class="px-6 py-3">สิทธิ์</th>
-                                            <th scope="col" class="px-6 py-3">จัดการ</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody></tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Approver Settings View -->
-                    <div id="approver-settings-view" class="view-content hidden">
-                        <button class="back-to-settings-btn mb-6 text-sm font-medium text-sky-600 hover:underline"><i class="fa-solid fa-arrow-left mr-2"></i>กลับไปหน้าตั้งค่า</button>
-                        <div class="form-section">
-                            <h2 class="form-section-title">ตั้งค่าสิทธิ์ผู้อนุมัติและผู้รับงาน</h2>
-                            <div class="mb-4">
-                                <label for="approver-search-input" class="sr-only">ค้นหาผู้ใช้</label>
-                                <input type="text" id="approver-search-input" placeholder="ค้นหาด้วยชื่อ, อีเมล, หรือแผนก..." class="w-full p-2 border border-slate-300 rounded-md shadow-sm">
-                            </div>
-                            <div class="overflow-x-auto">
-                                <table id="approvers-table" class="w-full text-sm text-left text-slate-500">
-                                    <thead class="text-xs text-slate-700 uppercase bg-slate-50">
-                                        <tr>
-                                            <th scope="col" class="px-6 py-3">ชื่อ-สกุล</th>
-                                            <th scope="col" class="px-6 py-3">Email</th>
-                                            <th scope="col" class="px-6 py-3">แผนก/หน่วยงาน</th>
                                             <th scope="col" class="px-6 py-3">ระดับการอนุมัติ</th>
                                             <th scope="col" class="px-6 py-3 text-center">ผู้มีสิทธิ์รับงาน</th>
+                                            <th scope="col" class="px-6 py-3">จัดการ</th>
                                         </tr>
                                     </thead>
                                     <tbody></tbody>
@@ -731,15 +741,15 @@
                                         <input type="text" id="profile-department" name="userDepartment" required class="w-full p-2 border border-slate-300 rounded-md shadow-sm">
                                     </div>
                                     <div>
-                                        <label for="profile-new-password" class="block text-sm font-medium text-slate-700 mb-1">รหัสผ่านใหม่ (ถ้าไม่เปลี่ยนให้ว่างไว้)</label>
-                                        <input type="password" id="profile-new-password" name="newPassword" class="w-full p-2 border border-slate-300 rounded-md shadow-sm">
+                                        <label for="profile-new-password" class="block text-sm font-semibold text-slate-700 mb-1.5">รหัสผ่านใหม่ (ถ้าไม่เปลี่ยนให้ว่างไว้)</label>
+                                        <input type="password" id="profile-new-password" name="newPassword" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all outline-none text-slate-800">
                                     </div>
                                     <div>
-                                        <label for="profile-confirm-password" class="block text-sm font-medium text-slate-700 mb-1">ยืนยันรหัสผ่านใหม่</label>
-                                        <input type="password" id="profile-confirm-password" name="confirmNewPassword" class="w-full p-2 border border-slate-300 rounded-md shadow-sm">
+                                        <label for="profile-confirm-password" class="block text-sm font-semibold text-slate-700 mb-1.5">ยืนยันรหัสผ่านใหม่</label>
+                                        <input type="password" id="profile-confirm-password" name="confirmNewPassword" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all outline-none text-slate-800">
                                     </div>
                                     <div class="pt-4">
-                                        <button type="submit" class="w-full px-6 py-2.5 bg-sky-600 text-white font-semibold rounded-lg shadow-md hover:bg-sky-700 transition">บันทึกข้อมูลส่วนตัว</button>
+                                        <button type="submit" class="w-full px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/20 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200">บันทึกข้อมูลส่วนตัว</button>
                                     </div>
                                 </form>
                             </div>
@@ -783,7 +793,7 @@
                             <div class="form-section">
                                 <h2 class="form-section-title">ประเภทงาน</h2>
                                 <div id="jobTypes-list" class="space-y-2 mb-4"></div>
-                                <button type="button" id="show-add-jobType-modal" class="w-full px-4 py-2 bg-sky-600 text-white font-semibold rounded-lg shadow-sm hover:bg-sky-700 transition">
+                                <button type="button" id="show-add-jobType-modal" class="w-full px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/20 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200">
                                     <i class="fa-solid fa-plus mr-2"></i>เพิ่มประเภทงาน
                                 </button>
                             </div>
@@ -791,7 +801,7 @@
                             <div class="form-section">
                                 <h2 class="form-section-title">ประเภทลูกค้า</h2>
                                 <div id="customerTypes-list" class="space-y-2 mb-4"></div>
-                                <button type="button" id="show-add-customerType-modal" class="w-full px-4 py-2 bg-sky-600 text-white font-semibold rounded-lg shadow-sm hover:bg-sky-700 transition">
+                                <button type="button" id="show-add-customerType-modal" class="w-full px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/20 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200">
                                     <i class="fa-solid fa-plus mr-2"></i>เพิ่มประเภทลูกค้า
                                 </button>
                             </div>
@@ -799,7 +809,7 @@
                             <div class="form-section">
                                 <h2 class="form-section-title">แผนก/หน่วยงาน</h2>
                                 <div id="departments-list" class="space-y-2 mb-4"></div>
-                                <button type="button" id="show-add-department-modal" class="w-full px-4 py-2 bg-sky-600 text-white font-semibold rounded-lg shadow-sm hover:bg-sky-700 transition">
+                                <button type="button" id="show-add-department-modal" class="w-full px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/20 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200">
                                     <i class="fa-solid fa-plus mr-2"></i>เพิ่มแผนก/หน่วยงาน
                                 </button>
                             </div>
@@ -819,7 +829,9 @@
             </div>
             <div class="flex justify-between items-center mb-4">
                  <h2 class="text-2xl font-bold text-slate-800">ตัวอย่างใบแจ้งงาน</h2>
-                 <button id="close-preview-modal" class="text-slate-500 hover:text-red-600 text-2xl">&times;</button>
+                 <button id="close-preview-modal" class="p-2 bg-slate-100 hover:bg-rose-50 text-slate-500 hover:text-rose-600 rounded-full transition-all duration-200 flex items-center justify-center w-10 h-10 border border-slate-200/50 hover:scale-105 active:scale-95 shadow-sm" title="ปิดหน้าต่าง">
+                     <i class="fa-solid fa-xmark text-lg"></i>
+                 </button>
             </div>
             <div id="a4-wrapper">
                 <!-- A4 pages will be dynamically inserted here by JS -->
@@ -828,6 +840,6 @@
         </div>
     </div>
     
-    <script src="app.js"></script>
+    <script defer src="app.js"></script>
 </body>
 </html>
