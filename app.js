@@ -131,12 +131,13 @@
             const isAdminOrManager = currentUserData.Role === 'Admin' || currentUserData.Role === 'Manager';
 
             // Filter count for "งานที่รอรับ"
-            const receiveCount = jobsList.filter(j => {
+            const userCanAccept = currentUserData.CanAcceptJobs === 'TRUE' || currentUserData.CanAcceptJobs === true;
+            const receiveCount = userCanAccept ? jobsList.filter(j => {
                 if (j['สถานะ'] !== 'รอรับงาน') return false;
                 if (j['ผู้รับงานจริง']) return false;
                 if (isAdmin) return true;
                 return j['ผู้รับผิดชอบ']?.includes(currentUserData.Email);
-            }).length;
+            }).length : 0;
 
             // Filter count for "งานที่ต้องปิด"
             const closeCount = jobsList.filter(j => {
@@ -2069,12 +2070,11 @@
                 const usersResult = await apiCall('getAllUsers');
                 if (!usersResult || usersResult.status !== 'success') return showAlert('ไม่สามารถโหลดรายชื่อผู้รับงานได้', 'error');
                 const technicians = usersResult.data.filter(u => 
-                 u.CanAcceptJobs === 'TRUE' || 
-                u.CanAcceptJobs === true
+                    u.CanAcceptJobs === 'TRUE' || 
+                    u.CanAcceptJobs === true
                 );
-                const { value: selected } = await Swal.fire({ title: 'เลือกผู้รับงาน', html: `<div class="swal2-checkbox-container">${technicians.map(t => `<label class="swal2-checkbox-label"><input type="checkbox" class="swal2-checkbox" value="${t.Email}"><span>${t.FullName}</span></label>`).join('')}</div>`, showCancelButton: true, confirmButtonText: 'มอบหมาย', preConfirm: () => Array.from(Swal.getHtmlContainer().querySelectorAll('input:checked')).map(cb => cb.value) });
-                if (!selected || selected.length === 0) return showAlert('กรุณาเลือกผู้รับงานอย่างน้อย 1 คน', 'error');
-                assignedTo = selected;
+                if (technicians.length === 0) return showAlert('ไม่พบผู้ใช้งานที่มีสิทธิ์รับงานในระบบ', 'error');
+                assignedTo = technicians.map(t => t.Email);
             }
             const result = await apiCall('processApproval', { jobId, isApproved, reason: reason || '', approverEmail: currentUserData.Email, assignedTo });
             if (result && result.status === 'success') {
@@ -2308,12 +2308,13 @@
         const isAdminOrManager = currentUserData.Role === 'Admin' || currentUserData.Role === 'Manager';
 
         // Filter jobs for receiving
-        const jobsToReceiveRaw = allJobsCache.filter(j => {
+        const userCanAccept = currentUserData.CanAcceptJobs === 'TRUE' || currentUserData.CanAcceptJobs === true;
+        const jobsToReceiveRaw = userCanAccept ? allJobsCache.filter(j => {
             if (j['สถานะ'] !== 'รอรับงาน') return false;
             if (j['ผู้รับงานจริง']) return false;
             if (isAdmin) return true;
             return j['ผู้รับผิดชอบ']?.includes(currentUserData.Email);
-        });
+        }) : [];
 
         // Filter jobs for closing
         const jobsToCloseRaw = allJobsCache.filter(j => {
