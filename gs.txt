@@ -1069,6 +1069,16 @@ function cleanDuplicatePendingJobs() {
 
 function uploadDataToFirebase() {
   const ui = SpreadsheetApp.getUi();
+  
+  // Prompt for security password
+  const passwordResponse = ui.prompt('ยืนยันรหัสผ่านความปลอดภัย', 'กรุณากรอกรหัสผ่านเพื่อดำเนินการอัพโหลดข้อมูลไปยัง Firebase:', ui.ButtonSet.OK_CANCEL);
+  if (passwordResponse.getSelectedButton() !== ui.Button.OK) return;
+  
+  if (passwordResponse.getResponseText() !== 'admin') {
+    ui.alert('การเข้าถึงถูกปฏิเสธ', 'รหัสผ่านไม่ถูกต้อง! ไม่สามารถอัพโหลดข้อมูลได้', ui.ButtonSet.OK);
+    return;
+  }
+
   const response = ui.alert('ยืนยันการอัพโหลด', 'คุณต้องการอัพโหลดข้อมูลจาก Google Sheets ไปยัง Firebase ใช่หรือไม่? (ข้อมูลเดิมบน Firebase ทั้งหมดจะถูกเขียนทับ)', ui.ButtonSet.YES_NO);
   if (response !== ui.Button.YES) return;
 

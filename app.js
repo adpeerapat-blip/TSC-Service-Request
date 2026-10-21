@@ -1667,7 +1667,16 @@
 
         const formatDate = (ds) => ds ? new Date(ds).toLocaleDateString('th-TH') : '-';
         const formatDateTime = (ds) => ds ? new Date(ds).toLocaleString('th-TH') : '-';
-        const formatTime = (ds) => ds ? new Date(ds).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.' : '-';
+        const formatTime = (ds) => {
+            if (!ds) return '-';
+            const str = String(ds).trim();
+            if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(str)) {
+                const parts = str.split(':');
+                return `${parts[0].padStart(2, '0')}:${parts[1]} น.`;
+            }
+            const d = new Date(str);
+            return !isNaN(d.getTime()) ? d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.' : `${str} น.`;
+        };
 
         const problemDescription = (job['รายละเอียดการแจ้งงาน'] || '-').replace(/\n/g, '<br>');
         const billingAddress = (job['ที่อยู่ลูกค้า (สำหรับเปิดบิล)'] || '-').replace(/\n/g, '<br>');
